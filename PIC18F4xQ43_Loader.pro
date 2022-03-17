@@ -33,6 +33,7 @@ HEADERS += \
         qs_bootprotocol.h \
         qs_bootprotocoldef.h \
         qs_bootprotocolstruct.h \
+        qs_guidefine.h \
         quantaloader.h
 
 FORMS += \
@@ -42,3 +43,6 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    resources.qrc
