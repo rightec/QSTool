@@ -26,9 +26,13 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
+        qs_bootprotocol.cpp \
         quantaloader.cpp
 
 HEADERS += \
+        qs_bootprotocol.h \
+        qs_bootprotocoldef.h \
+        qs_bootprotocolstruct.h \
         quantaloader.h
 
 FORMS += \
