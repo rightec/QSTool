@@ -27,12 +27,14 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         qs_bootprotocol.cpp \
+        qs_cmdthread.cpp \
         quantaloader.cpp
 
 HEADERS += \
         qs_bootprotocol.h \
         qs_bootprotocoldef.h \
         qs_bootprotocolstruct.h \
+        qs_cmdthread.h \
         qs_guidefine.h \
         quantaloader.h
 

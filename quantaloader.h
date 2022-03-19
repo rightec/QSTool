@@ -2,9 +2,14 @@
 #define QUANTALOADER_H
 
 #include <QMainWindow>
-#include "qs_guidefine.h"
+#include <QDebug>
+#include <QFileDialog>
+#include <QProgressBar>
+#include <QMessageBox>
+#include <QTimer>
 
-#include "QDebug"
+#include "qs_guidefine.h"
+#include "qs_cmdthread.h"
 
 
 namespace Ui {
@@ -22,10 +27,21 @@ public:
 private slots:
     void on_m_btnChoosePanel_clicked();
 
+    void on_m_btn_clearUpgradeLog_clicked();
+
+    void on_m_btn_ClearCmdPanelLog_clicked();
+
+    void on_m_bnt_openDialog_clicked();
+
 private:
-    Ui::QuantaLoader *ui;
-    QS_PanelSection m_guiSection;
-    QRect   m_RefRect;
+    Ui::QuantaLoader    *ui;
+    QS_PanelSection     m_guiSection;
+    QRect               m_RefRect;
+    QMessageBox         m_msgBox;
+    QTimer              m_Tmr_UpdateFWProgBar;
+
+    QS_CmdThread        *m_p_CmdThread;
+    QThread             m_workerThread;
 
     /*!
      * \brief setGuiSection: Change the current section of the GUI
@@ -48,6 +64,18 @@ private:
      * \brief displayFwUpgradeSection: Display FW Upgrade Section of the GUI
      */
     void displayFwUpgradeSection();
+
+    /*!
+     * \brief initProgressBar
+     */
+    void initProgressBar();
+
+private slots:
+    void onCmdResultReady(bool _res);
+    void onFwUpdateUpdateprog();
+
+signals:
+    void operate(int _operate);
 };
 
 #endif // QUANTALOADER_H
