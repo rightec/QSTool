@@ -7,6 +7,15 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    /*! Build the the reference RECT for sub panels*/
+    m_RefRect.setX(QS_REF_RECT_X);
+    m_RefRect.setY(QS_REF_RECT_Y);
+    m_RefRect.setWidth(QS_REF_RECT_W);
+    m_RefRect.setHeight(QS_REF_RECT_H);
+
+    ui->m_frm_PanelCmd->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+    ui->m_frm_mainUpload->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+
     /*! Build the Header Frame*/
     QPixmap l_logo_pic;
     l_logo_pic.load( QS_HEADER_RES);
@@ -14,7 +23,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     ui->m_lbl_tool->setText( QS_HEADER_BOOT);
 
     /*! Select the defualt section: Upgrade section*/
-    setGuiSection(QS_CMD_PANEL_SECTION);
+    setGuiSection(QS_FW_UPGRADE_SECTION);
 }
 
 void QuantaLoader::setGuiSection(QS_PanelSection _section)
@@ -42,6 +51,7 @@ void QuantaLoader::displayCmdSection()
     /// Hide Fw Upgrade section
     /// Show Command Section
     /// Change reference button string
+    ui->m_frm_PanelCmd->setGeometry(m_RefRect);
     ui->m_frm_PanelCmd->setVisible(true);
     ui->m_frm_mainUpload->setVisible(false);
     ui->m_btnChoosePanel->setText(QS_SECTION_FW);
@@ -53,6 +63,7 @@ void QuantaLoader::displayFwUpgradeSection()
     /// Show Fw Upgrade section
     /// Hide Command Section
     /// Change reference button string
+    ui->m_frm_mainUpload->setGeometry(m_RefRect);
     ui->m_frm_PanelCmd->setVisible(false);
     ui->m_frm_mainUpload->setVisible(true);
     ui->m_btnChoosePanel->setText(QS_SECTION_CMD);

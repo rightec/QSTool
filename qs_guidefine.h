@@ -14,6 +14,12 @@
 #define QS_SECTION_FW       "Upgrade FW"
 #define QS_SECTION_CMD      "Command Panel"
 
+#define QS_REF_RECT_X       5
+#define QS_REF_RECT_Y       160
+#define QS_REF_RECT_W       1014
+#define QS_REF_RECT_H       635
+
+
 
 typedef enum {
     QS_CMD_PANEL_SECTION = 0,

@@ -25,6 +25,7 @@ private slots:
 private:
     Ui::QuantaLoader *ui;
     QS_PanelSection m_guiSection;
+    QRect   m_RefRect;
 
     /*!
      * \brief setGuiSection: Change the current section of the GUI
