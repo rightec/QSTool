@@ -70,9 +70,34 @@ private:
      */
     void initProgressBar();
 
+    /*!
+     * \brief activateProgBar
+     */
+    void activateProgBar();
+
 private slots:
     void onCmdResultReady(bool _res);
     void onFwUpdateUpdateprog();
+
+    void on_m_btn_reset_clicked();
+
+    void on_m_btn_startUpgrade_clicked();
+
+    void on_m_btn_readBoot_clicked();
+
+    void on_m_btn_readDID_clicked();
+
+    void on_m_btn_readRID_clicked();
+
+    void on_m_btn_readFW_clicked();
+
+    void on_m_btn_EraseFlash_clicked();
+
+    void on_m_btn_ReadFlash_clicked();
+
+    void on_m_btn_writeFlash_clicked();
+
+    void on_m_btn_startFwUpgrade_clicked();
 
 signals:
     void operate(int _operate);

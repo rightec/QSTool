@@ -32,6 +32,18 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
 
     /*! Initialize widgets*/
     initProgressBar();
+    connect(&m_Tmr_UpdateFWProgBar, SIGNAL(timeout()), this, SLOT(onFwUpdateUpdateprog()));
+
+    /// Init MessageBox
+    m_msgBox.setWindowTitle(QS_APPLICATION_NAME);
+    m_msgBox.setStandardButtons(QMessageBox::Yes);
+
+    /// message box Dialog dimension
+    QSpacerItem* l_horizontalSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QGridLayout* l_layout = static_cast<QGridLayout*>(m_msgBox.layout());
+    l_layout->addItem(l_horizontalSpacer, l_layout->rowCount(), 0, 1, l_layout->columnCount());
+
+
 
     /*! Thread section starts*/
     m_p_CmdThread = new QS_CmdThread(nullptr);
@@ -88,6 +100,27 @@ void QuantaLoader::displayFwUpgradeSection()
 
 }
 
+void QuantaLoader::initProgressBar()
+{
+    ui->m_prg_UpdateFW->setVisible(false);
+    ui->m_prg_UpdateFW->setValue(0);
+}
+
+void QuantaLoader::activateProgBar()
+{
+
+    QProgressBar *l_WidgetTemp = nullptr;
+    QString l_S_safe = "QProgressBar::chunk {background: green;border-bottom-right-radius: 7px;border-bottom-left-radius: 7px;border: 1px solid black;}";
+
+    l_WidgetTemp = ui->m_prg_UpdateFW;
+    m_Tmr_UpdateFWProgBar.start(500);
+
+    l_WidgetTemp->setVisible(true);
+    l_WidgetTemp->setMinimum(0);
+    l_WidgetTemp->setMaximum(100);
+    l_WidgetTemp->setStyleSheet(l_S_safe);
+}
+
 QuantaLoader::~QuantaLoader()
 {
     delete ui;
@@ -135,91 +168,58 @@ void QuantaLoader::on_m_bnt_openDialog_clicked()
 void QuantaLoader::onCmdResultReady(bool _res)
 {
     bool l_bo_Error = false;
-    QProgressBar *l_WidgetTemp = nullptr;
     QString l_S_danger = "QProgressBar::chunk {background: red;border-bottom-right-radius: 5px;border-bottom-left-radius: 5px;border: .px solid black;}";
-    QTimer *l_Tmr = nullptr;
-    QString l_S_FailCommand = "";
-    QString l_S_DoneCommand = "";
+    QString l_S_FailCommand = QS_ERR_CMD_NOT_EXECUTED;
+    QString l_S_DoneCommand = QS_ERR_CMD_EXECUTED;
 
+    /*! A command could came from the UPGRADE Section
+     *  either the command panel section
+     */
     switch (static_cast<int>(getGuiSection()))
     {
     case QS_FW_UPGRADE_SECTION:
-        l_WidgetTemp = ui->m_prg_UpdateFW;
-        l_Tmr = &m_Tmr_UpdateFWProgBar;
-        /*
-        if (m_FWUpdatePanelState == IDS_UPDATE_PANEL_ACTIVE){
-            /// In active only he GET command is allowed
-            m_msgBox.setText(IDS_MSG_GET_FW_VER_FAIL);
-            l_S_FailCommand = IDS_MSG_GET_FW_VER_FAIL;
-            l_S_DoneCommand = IDS_MSG_GET_FW_VER_DONE;
+        /// In case of command connected to prog bar
+        if (_res == false){
+            ui->m_prg_UpdateFW->setStyleSheet(l_S_danger);
+        } else {
+            /// TO DO set style sheet
         }
-        else {
-            if (_res == false){
-                m_msgBox.setText(IDS_MSG_GET_FW_VER_FAIL);
-            }
-            else {
-                m_msgBox.setText(IDS_MSG_UPDATE_OK);
-            }
-            l_S_FailCommand = IDS_MSG_UPDATE_FW_FAIL;
-            l_S_DoneCommand = IDS_MSG_UPDATE_FW_DONE;
-            l_Tmr = &m_Tmr_UpdateFWProgBar;
-        }
-        */
+        ui->m_prg_UpdateFW->setValue(ui->m_prg_UpdateFW->maximum());
+
+        QThread::msleep(3000);  // Wait time for the user to see the failure
+
+        /// Reset the progress bar
+        m_Tmr_UpdateFWProgBar.stop();
+        ui->m_prg_UpdateFW->setVisible(false);
+        ui->m_prg_UpdateFW->setValue(0);
         break;
     case QS_CMD_PANEL_SECTION:
-            // m_msgBox.setText(IDS_MSG_CHANGE_BAND_DONE);
         break;
     default:
         l_bo_Error = true;
+        m_msgBox.setText(QS_ERR_GENERAL_SW);
         qDebug() << "QuantaLoader::onCmdResultReady - Not Plausible branch";
         break;
-    }
+    } // End swicth
 
     if (l_bo_Error == false){
-        if (l_WidgetTemp != nullptr){
-            /// it is a command connected with the progress bar?
-            if (l_WidgetTemp->isVisible() == true){
-                /// yes it is a command connected with prog bar
-                l_WidgetTemp->setValue(l_WidgetTemp->maximum());
-                if (_res == true){
-                    qDebug() << "QuantaLoader::onCmdResultReady: " <<  l_S_DoneCommand;
-                    if (m_msgBox.exec() == QMessageBox::Yes){
-                    } ///else
-                }
-                else {
-                    qDebug() << "QuantaLoader::onCmdResultReady: " << l_S_FailCommand;
-                    l_WidgetTemp->setStyleSheet(l_S_danger);
-                    /// Display a QMessage Box
-                    if (m_msgBox.exec() == QMessageBox::Yes){
-                    } ///else
-                }
-
-                QThread::msleep(3000);
-                if (l_Tmr != nullptr){
-                    /// In case of command connected to prog bar
-                    l_Tmr->stop();
-                } /// else
-                l_WidgetTemp->setVisible(false);
-                l_WidgetTemp->setValue(0);
-
-            }
-            else {
-                /// It is a command not related to the progress bar
-                if (_res == true){
-                    qDebug() << "RadarGui_000::onCmdResultReady: " << l_S_DoneCommand;
-                }
-                else {
-                    qDebug() << "RadarGui_000::onCmdResultReady: " << l_S_FailCommand;
-                    /// Display a QMessage Box
-                    if (m_msgBox.exec() == QMessageBox::Yes){
-                    } ///else
-                }
-            }
+        if (_res == true){
+            m_msgBox.setText(l_S_DoneCommand);
+            qDebug() << "QuantaLoader::onCmdResultReady: " << l_S_DoneCommand;
         }
         else {
-            qDebug() << "QuantaLoader::onCmdResultReady: ???????";
+            qDebug() << "QuantaLoader::onCmdResultReady: " << l_S_FailCommand;
+            /// Display a QMessage Box
+            m_msgBox.setText(l_S_FailCommand);
+            if (m_msgBox.exec() == QMessageBox::Yes){
+            } ///else
         }
-    } /// else
+    } else {
+        if (m_msgBox.exec() == QMessageBox::Yes){
+            qDebug() << "QuantaLoader::onCmdResultReady: ERROR";
+        } ///else
+
+    }
 }
 
 void QuantaLoader::onFwUpdateUpdateprog()
@@ -229,7 +229,7 @@ void QuantaLoader::onFwUpdateUpdateprog()
     int l_i_tgtBarVal = -1;
     int l_i_tgtBatValTimed = -1;
     int l_i_tgtTimer = -1;
-    qDebug() << "GetCurrentBlock " << l_i_refVal;
+    qDebug() << "QuantaLoader::onFwUpdateUpdateprog - GetCurrentBlock " << l_i_refVal;
     if (l_i_refVal == -1){
         ui->m_prg_UpdateFW->setValue(ui->m_prg_UpdateFW->value() + 1);
         // TO DOm_UpdFwProgBarFlag = false;
@@ -256,10 +256,69 @@ void QuantaLoader::onFwUpdateUpdateprog()
     }
 }
 
-
-void QuantaLoader::initProgressBar()
+void QuantaLoader::on_m_btn_reset_clicked()
 {
-    ui->m_prg_UpdateFW->setVisible(false);
-    ui->m_prg_UpdateFW->setValue(0);
+    /// TO DO - Prepare command
+    emit operate(QS_BOOTP_RESET);
 }
 
+void QuantaLoader::on_m_btn_startUpgrade_clicked()
+{
+    /// TO DO - Prepare command
+    /// Only send the Start upgrade cmd and wait the answer
+    emit operate(QS_BOOTP_DUMMY_START_UP);
+}
+
+void QuantaLoader::on_m_btn_readBoot_clicked()
+{
+    /// TO DO - Prepare command
+    emit operate(QS_BOOTP_READ_BOOT);
+}
+
+void QuantaLoader::on_m_btn_readDID_clicked()
+{
+    /// TO DO - Prepare command
+    emit operate(QS_BOOTP_READ_DEV);
+}
+
+void QuantaLoader::on_m_btn_readRID_clicked()
+{
+    /// TO DO - Prepare command
+    emit operate(QS_BOOTP_READ_REV);
+}
+
+void QuantaLoader::on_m_btn_readFW_clicked()
+{
+    /// TO DO - Prepare command
+    emit operate(QS_BOOTP_READ_FW);
+}
+
+void QuantaLoader::on_m_btn_EraseFlash_clicked()
+{
+    /// TO DO - Prepare command
+    /// Retrieve Bank info
+    emit operate(QS_BOOTP_ERASE);
+}
+
+void QuantaLoader::on_m_btn_ReadFlash_clicked()
+{
+    /// TO DO - Prepare command
+    /// Retrieve Address info and number of bytes to read
+    emit operate(QS_BOOTP_READ_FLASH);
+}
+
+void QuantaLoader::on_m_btn_writeFlash_clicked()
+{
+    /// TO DO - Prepare command
+    /// Retrieve Bank info and item to write
+    emit operate(QS_BOOTP_WRITE_FLASH);
+
+}
+
+void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
+{
+    /// TO DO - Prepare command
+    /// Start the full FW Upgrade command sequence
+    activateProgBar();
+    emit operate(QS_BOOTP_START_FW_UP);
+}

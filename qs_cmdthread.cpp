@@ -45,6 +45,9 @@ void QS_CmdThread::onRunCommand(int _idCmd)
     case QS_BOOTP_WRITE_FLASH:
         break;
     case QS_BOOTP_START_FW_UP:
+        QThread::msleep(2000); // Just to try
+        break;
+    case QS_BOOTP_DUMMY_START_UP:
         break;
     default:
         qDebug() << " QS_CmdThread::onRunCommand case not managed";

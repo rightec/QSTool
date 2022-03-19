@@ -13,13 +13,18 @@
 #define QS_HEADER_BOOT      "PIC18F4xQ43 BootLoader Tool"
 #define QS_SECTION_FW       "Upgrade FW"
 #define QS_SECTION_CMD      "Command Panel"
+#define QS_APPLICATION_NAME QS_HEADER_BOOT
 
 #define QS_REF_RECT_X       5
 #define QS_REF_RECT_Y       160
 #define QS_REF_RECT_W       1014
 #define QS_REF_RECT_H       635
 
-
+/*! String error section
+  */
+#define QS_ERR_GENERAL_SW           "Unexpected S/W Error"
+#define QS_ERR_CMD_EXECUTED         "Command Correctly Executed"
+#define QS_ERR_CMD_NOT_EXECUTED     "Command NOT Executed"
 
 typedef enum {
     QS_CMD_PANEL_SECTION = 0,
