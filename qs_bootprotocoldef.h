@@ -23,8 +23,7 @@
 
 #define QS_BOOTP_RESP_OFFSET        0x80 /*  Offset for command identifier field during response */
 
-#define QS_BOOTP_POL_DEF            0x00 /*  Default value for the policy field */
-// #define QS_BOOTP_PAY_OFF            QS_BOOTP_OK /*  Default value to fill cmd without any significant payload */
+#define QS_BOOTP_VOID_PAYLOAD       0xAA /*  Reset/StartUpdgrade commands have a single byte payload */
 
 /*!
  * Section to define command ID
@@ -50,9 +49,14 @@
 #define QS_BOOTP_READ_FLASH     0x52
 #define QS_BOOTP_WRITE_FLASH    0x53
 #define QS_BOOTP_START_FW_UP    0x70
-#define QS_BOOTP_DUMMY_START_UP 0x71    // Dummy start up
 
-#define QS_BOOTP_MAX_BAK_NUM    10      // Max number of bank in the flash - TO FIND IN DATASHEET
-#define QS_BOOTP_FLASH_MEM_SIZE 0x1000  // Max number of bank in the flash - TO FIND IN DATASHEET
+#define QS_BOOTP_MAX_BAK_NUM    10      /* Max number of bank in the flash - TO FIND IN DATASHEET*/
+#define QS_BOOTP_FLASH_MEM_SIZE 0x1000  /* Max number of bank in the flash - TO FIND IN DATASHEET*/
+#define QS_BOOTP_BLOCK_SIZE     256     /* Size of the block in the flash - TO FIND IN DATASHEET*/
+
+typedef enum {
+    QS_BOOTP_POL_DEF  =          0x00, /*  Default value for the policy field */
+    QS_BOOTP_POL_DUMMY =         0x01  /*  The command is a dummy one - Dummy means "has no effect on the FW" */
+}POLICY_INFO;
 
 #endif /* QS_BOOTPROTOCOLDEF_H*/

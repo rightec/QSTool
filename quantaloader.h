@@ -43,6 +43,7 @@ private:
     QS_CmdThread        *m_p_CmdThread;
     QThread             m_workerThread;
 
+
     /*!
      * \brief setGuiSection: Change the current section of the GUI
      * \param _section: Target section
@@ -75,8 +76,20 @@ private:
      */
     void activateProgBar();
 
+    /*!
+     * \brief preSendCommand. Prepare the command to be sent to the low layer
+     * \return: true if the command has correctly send to the low layer
+     */
+    bool preSendCommand();
+
+    /*!
+     * \brief writeSendToLog: write current send command to serial log
+     */
+    void writeSendToLog();
+
 private slots:
     void onCmdResultReady(bool _res);
+
     void onFwUpdateUpdateprog();
 
     void on_m_btn_reset_clicked();

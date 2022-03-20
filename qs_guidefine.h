@@ -25,6 +25,7 @@
 #define QS_ERR_GENERAL_SW           "Unexpected S/W Error"
 #define QS_ERR_CMD_EXECUTED         "Command Correctly Executed"
 #define QS_ERR_CMD_NOT_EXECUTED     "Command NOT Executed"
+#define QS_ERR_CMD_CURR_SEND        "A Command is already sending"
 
 typedef enum {
     QS_CMD_PANEL_SECTION = 0,

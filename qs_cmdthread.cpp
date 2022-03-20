@@ -12,6 +12,8 @@
 QS_CmdThread::QS_CmdThread(QObject *parent)
 	: QObject(parent)
 {
+    /// No command running at the start up
+    setCmdRunning(false);
 }
 
 QS_CmdThread::~QS_CmdThread()
@@ -22,7 +24,9 @@ void QS_CmdThread::onRunCommand(int _idCmd)
 {
     qDebug() << " QS_CmdThread::onRunCommand started";
 
-	bool l_bo_Result = false;
+    bool l_bo_Result = false;
+
+    setCmdRunning(true);
 
 	switch (_idCmd)
 	{
@@ -47,14 +51,14 @@ void QS_CmdThread::onRunCommand(int _idCmd)
     case QS_BOOTP_START_FW_UP:
         QThread::msleep(2000); // Just to try
         break;
-    case QS_BOOTP_DUMMY_START_UP:
-        break;
     default:
         qDebug() << " QS_CmdThread::onRunCommand case not managed";
 		l_bo_Result = false;
 		break;
-	}
+    } // end switch
+
     qDebug() << " QS_CmdThread::onRunCommand ended";
+    setCmdRunning(false);
 	emit cmdResultReady(l_bo_Result);
 }
 

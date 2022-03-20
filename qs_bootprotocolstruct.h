@@ -73,20 +73,28 @@ typedef struct
     uint16_t         READ_Info_Number;     /* Number of bytes to read */
 } READ_FROM_FLASH_T;
 
-
+/*!
+ *  \typedef Stuctrured type to be used as payload in the following commands:
+ *  WRITE when coming from SW
+ */
+typedef struct
+{
+    uint8_t         WRITE_Block;            /* Block to write */
+    uint8_t         WRITE_element;          /* Element to write */
+}WRITE_TO_FLASH_T;
 
 typedef struct QS_bootProt{
-    uint8_t qs_Stx;         /*STX: Start of Message*/
-    uint8_t qs_PayLen;      /*Payload lenght from 1 to 256 ---> Expressed as 0 to 255*/
-                            /*Minimum payload lenght = 1*/
-    uint8_t qs_Sender;      /*Sender of the packet
-                            sender Address (0x20 for SW, 0x23 for Bootloader-FW; not specified for Application-FW)*/
-    uint8_t qs_Policy;      /* User define field*/
-    uint8_t qs_CmdId;       /*Command identifier field*/
-    uint8_t *qs_Payload;    /*Payload field*/
-    uint8_t qs_CrcLow;      /*CRC-16 low byte*/
-    uint8_t qs_CrcHigh;     /*CRC-16 high byte*/
-    uint8_t qs_Etx;         /*ETX: End of Message*/
+    uint8_t qs_Stx;                                 /*STX: Start of Message*/
+    uint16_t qs_PayLen;                             /*Payload lenght from 1 to 256 ---> Expressed as 0 to 255*/
+                                                    /*Minimum payload lenght = 1*/
+    uint8_t qs_Sender;                              /*Sender of the packet
+                                                    sender Address (0x20 for SW, 0x23 for Bootloader-FW; not specified for Application-FW)*/
+    uint8_t qs_Policy;                              /* User define field*/
+    uint8_t qs_CmdId;                               /*Command identifier field*/
+    uint8_t qs_Payload[QS_BOOTP_MAX_PAY_LEN];       /*Payload field*/
+    uint8_t qs_CrcLow;                              /*CRC-16 low byte*/
+    uint8_t qs_CrcHigh;                             /*CRC-16 high byte*/
+    uint8_t qs_Etx;                                 /*ETX: End of Message*/
 } QS_BOOT_PROT_T;
 
 
