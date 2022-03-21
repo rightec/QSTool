@@ -43,7 +43,11 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     QGridLayout* l_layout = static_cast<QGridLayout*>(m_msgBox.layout());
     l_layout->addItem(l_horizontalSpacer, l_layout->rowCount(), 0, 1, l_layout->columnCount());
 
-
+    /// Connection comboBox
+    const auto l_infos = QSerialPortInfo::availablePorts();
+        for (const QSerialPortInfo &l_info : l_infos){
+            ui->m_cmb_comPort->addItem(l_info.portName());
+        } // end for cycle - Filling the combo box
 
     /*! Thread section starts*/
     m_p_CmdThread = new QS_CmdThread(nullptr);
@@ -51,8 +55,16 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
     connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
     connect(m_p_CmdThread, SIGNAL(cmdResultReady(bool)), this, SLOT(onCmdResultReady(bool)));
-    m_workerThread.start();
+    /// m_workerThread.start();  /// TO DO Comment for now
     // Thread section ends
+
+    /// BaudRate comboBox
+    for ( int l_i = 0;l_i < QS_SERIAL_BAUD_END; l_i++ )
+    {
+       uint32_t l_baudRate = m_p_CmdThread->getBaudRate(l_i);
+       ui->m_cmb_BaudRate->addItem(QString::number(l_baudRate,10));
+    }
+
 
 }
 

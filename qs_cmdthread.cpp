@@ -10,7 +10,7 @@
 
 
 QS_CmdThread::QS_CmdThread(QObject *parent)
-	: QObject(parent)
+    : QS_SerialThread(parent)
 {
     /// No command running at the start up
     setCmdRunning(false);

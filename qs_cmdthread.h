@@ -11,9 +11,10 @@
 
 #include "qs_bootprotocoldef.h"
 #include "qs_bootprotocolstruct.h"
+#include "qs_serialthread.h"
 
 
-class QS_CmdThread : public QObject
+class QS_CmdThread : public QS_SerialThread
 {
 	Q_OBJECT
 

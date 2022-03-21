@@ -7,6 +7,7 @@
 #include <QProgressBar>
 #include <QMessageBox>
 #include <QTimer>
+#include <QSerialPortInfo>
 
 #include "qs_guidefine.h"
 #include "qs_cmdthread.h"

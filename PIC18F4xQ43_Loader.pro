@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets serialport
 
 TARGET = PIC18F4xQ43_Loader
 TEMPLATE = app
@@ -28,6 +28,7 @@ SOURCES += \
         main.cpp \
         qs_bootprotocol.cpp \
         qs_cmdthread.cpp \
+        qs_serialthread.cpp \
         quantaloader.cpp
 
 HEADERS += \
@@ -36,6 +37,8 @@ HEADERS += \
         qs_bootprotocolstruct.h \
         qs_cmdthread.h \
         qs_guidefine.h \
+        qs_serialdefine.h \
+        qs_serialthread.h \
         quantaloader.h
 
 FORMS += \
