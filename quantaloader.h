@@ -36,13 +36,15 @@ private slots:
 
 private:
     Ui::QuantaLoader    *ui;
-    QS_PanelSection     m_guiSection;
     QRect               m_RefRect;
     QMessageBox         m_msgBox;
     QTimer              m_Tmr_UpdateFWProgBar;
+    QThread             m_workerThread;
 
     QS_CmdThread        *m_p_CmdThread;
-    QThread             m_workerThread;
+    QS_PanelSection     m_guiSection;
+
+    bool                m_isConnected;
 
 
     /*!
@@ -88,6 +90,12 @@ private:
      */
     void writeSendToLog();
 
+    /*!
+     * \brief enableCmdButton: Enable/Disable all the command buttons on both panels
+     * \param _enable
+     */
+    void enableCmdButton(bool _enable);
+
 private slots:
     void onCmdResultReady(bool _res);
 
@@ -112,6 +120,8 @@ private slots:
     void on_m_btn_writeFlash_clicked();
 
     void on_m_btn_startFwUpgrade_clicked();
+
+    void on_m_btn_connect_clicked();
 
 signals:
     void operate(int _operate);

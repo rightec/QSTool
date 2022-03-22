@@ -139,3 +139,24 @@ void QS_CmdThread::setPolicyInfo(POLICY_INFO _policy)
 {
     m_CurrCmdPolInfo = _policy;
 }
+
+bool QS_CmdThread::startSerialConnection(QString _comPort, uint32_t _baudRate)
+{
+    bool l_b_RetVal = false;
+
+    l_b_RetVal = setPort(_comPort);
+    if (l_b_RetVal == true){
+        l_b_RetVal = setBaudRate(_baudRate);
+        if (l_b_RetVal == true){
+            l_b_RetVal = openSerial();
+        } // else
+    } // else
+
+    return l_b_RetVal;
+
+}
+
+void QS_CmdThread::stopSerialConnection()
+{
+    closeSerial();
+}

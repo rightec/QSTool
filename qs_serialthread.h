@@ -13,6 +13,7 @@
 #include <QWaitCondition>
 #include <QSerialPort>
 #include <QTime>
+#include <QDebug>
 
 #include "qs_serialdefine.h"
 
@@ -33,12 +34,41 @@ public:
      * \return
      */
     uint32_t getBaudRate(int _index);
+
+    /*!
+     * \brief setBaudRate: Set the baudRate for the seril port
+     * \param _baudRate
+     * \return: false if setting is wrong
+     */
+    bool setBaudRate(uint32_t _baudRate);
+
+    /*!
+     * \brief setPort: Set the reference port for the serial connection
+     * \param _comPort
+     * \return: false if setting is wrong
+     */
+    bool setPort(QString _comPort);
+
+    /*!
+     * \brief openSerial: Open serial connection
+     * \return: true if the port is open
+     */
+    bool openSerial();
+
+    /*!
+     * \brief closeSerial: Close serial connection
+     * \return
+     */
+    bool closeSerial();
+
+
 signals:
     void response(const QString &s);
     void error(const QString &s);
     void timeout(const QString &s);
 
 private:
+
     void run() override;
 
     QString m_portName;

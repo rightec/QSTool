@@ -68,6 +68,18 @@ public:
      */
     bool prepCommand(int _idCmd);
 
+    /*!
+     * \brief startSerialConnection: Start serial connection
+     * \param _comPort
+     * \param _baudRate
+     * \return
+     */
+    bool startSerialConnection(QString _comPort, uint32_t _baudRate);
+
+    /*!
+     * \brief stopSerialConnection
+     */
+    void stopSerialConnection();
 
     QS_BOOT_PROT_T      m_cmdToSend;
 

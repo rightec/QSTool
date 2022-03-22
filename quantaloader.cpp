@@ -33,6 +33,8 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     /*! Initialize widgets*/
     initProgressBar();
     connect(&m_Tmr_UpdateFWProgBar, SIGNAL(timeout()), this, SLOT(onFwUpdateUpdateprog()));
+    m_isConnected = false;
+    enableCmdButton(m_isConnected);
 
     /// Init MessageBox
     m_msgBox.setWindowTitle(QS_APPLICATION_NAME);
@@ -131,6 +133,20 @@ void QuantaLoader::activateProgBar()
     l_WidgetTemp->setMinimum(0);
     l_WidgetTemp->setMaximum(100);
     l_WidgetTemp->setStyleSheet(l_S_safe);
+}
+
+void QuantaLoader::enableCmdButton(bool _enable)
+{
+    ui->m_btn_reset->setEnabled(_enable);
+    ui->m_btn_readFW->setEnabled(_enable);
+    ui->m_btn_readDID->setEnabled(_enable);
+    ui->m_btn_readRID->setEnabled(_enable);
+    ui->m_btn_readBoot->setEnabled(_enable);
+    ui->m_btn_ReadFlash->setEnabled(_enable);
+    ui->m_btn_EraseFlash->setEnabled(_enable);
+    ui->m_btn_writeFlash->setEnabled(_enable);
+    ui->m_btn_startUpgrade->setEnabled(_enable);
+    ui->m_btn_startFwUpgrade->setEnabled(_enable);
 }
 
 bool QuantaLoader::preSendCommand(int _cmdId)
@@ -487,4 +503,45 @@ void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
         } ///else
     } // else
 
+}
+
+void QuantaLoader::on_m_btn_connect_clicked()
+{
+    bool l_b_RetVal = false;
+    QString l_comPort = ui->m_cmb_comPort->currentText();
+    QString l_S_BaudRate = ui->m_cmb_BaudRate->currentText();
+    uint32_t l_baudRate = 0;
+
+    if (m_isConnected == false){
+       l_baudRate = l_S_BaudRate.toULong(&l_b_RetVal, 10);
+        if (l_b_RetVal == true){
+            l_b_RetVal = m_p_CmdThread->startSerialConnection(l_comPort,  l_baudRate);
+        } // else
+    } else {
+        m_p_CmdThread->stopSerialConnection();
+    }
+    if (l_b_RetVal == false){
+        /// Connection is not possible
+        /// Emit a video message
+        if (m_isConnected == false){
+            m_msgBox.setText(QS_ERR_CMD_CONN_FAIL);
+            if (m_msgBox.exec() == true){
+                // nothing to do
+            } // else
+        } else {
+            /// Set the connection flag to false
+            m_isConnected = false;
+        }
+        /// Disable all the command button
+        enableCmdButton(m_isConnected);
+        /// Change button text
+        ui->m_btn_connect->setText("CONNECT");
+    } else {
+        /// Set the connection flag to true
+        m_isConnected = true;
+        /// Enable all the command button
+        enableCmdButton(m_isConnected);
+        /// Change button text
+        ui->m_btn_connect->setText("DISCONNECT");
+    }
 }

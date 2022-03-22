@@ -26,6 +26,7 @@
 #define QS_ERR_CMD_EXECUTED         "Command Correctly Executed"
 #define QS_ERR_CMD_NOT_EXECUTED     "Command NOT Executed"
 #define QS_ERR_CMD_CURR_SEND        "A Command is already sending"
+#define QS_ERR_CMD_CONN_FAIL        "Connection failure"
 
 typedef enum {
     QS_CMD_PANEL_SECTION = 0,

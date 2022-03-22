@@ -81,39 +81,21 @@ void QS_SerialThread::transaction(const QString &portName, int waitTimeout, cons
 //! [4]
 void QS_SerialThread::run()
 {
-    bool currentPortNameChanged = false;
+    qDebug() << "QS_SerialThread::run() - ENTER";
 
     m_mutex.lock();
-//! [4] //! [5]
-    QString currentPortName;
-    if (currentPortName != m_portName) {
-        currentPortName = m_portName;
-        currentPortNameChanged = true;
-    }
 
     int currentWaitTimeout = m_waitTimeout;
     QString currentRequest = m_request;
     m_mutex.unlock();
-//! [5] //! [6]
-
-
-    if (currentPortName.isEmpty()) {
-        emit error(tr("No port name specified"));
-        return;
-    }
 
     while (!m_quit) {
-//![6] //! [7]
-        if (currentPortNameChanged) {
-            m_serial.close();
-            m_serial.setPortName(currentPortName);
 
             if (!m_serial.open(QIODevice::ReadWrite)) {
                 emit error(tr("Can't open %1, error code %2")
                            .arg(m_portName).arg(m_serial.error()));
                 return;
             }
-        }
 //! [7] //! [8]
         // write request
         const QByteArray requestData = currentRequest.toUtf8();
@@ -139,23 +121,67 @@ void QS_SerialThread::run()
             emit timeout(tr("Wait write request timeout %1")
                          .arg(QTime::currentTime().toString()));
         }
-//! [9]  //! [13]
         m_mutex.lock();
         m_cond.wait(&m_mutex);
-        if (currentPortName != m_portName) {
-            currentPortName = m_portName;
-            currentPortNameChanged = true;
-        } else {
-            currentPortNameChanged = false;
-        }
         currentWaitTimeout = m_waitTimeout;
         currentRequest = m_request;
         m_mutex.unlock();
     }
-//! [13]
 }
 
 uint32_t QS_SerialThread::getBaudRate(int _index)
 {
     return m_BaudeRatesAvail[_index];
+}
+
+bool QS_SerialThread::setBaudRate(uint32_t _baudRate)
+{
+    bool l_b_RetVal = false;
+
+    /// Verify if the baudrate is an availabel one
+
+    for(int i=0; i<QS_SERIAL_BAUD_END; i++){
+        if (_baudRate == m_BaudeRatesAvail[i]){
+            m_serial.setBaudRate(static_cast<qint32>(_baudRate));
+            l_b_RetVal = true; // Find a plausible baudRate
+            break; // Break the for cycle
+        }
+    }
+
+    return l_b_RetVal;
+}
+
+bool QS_SerialThread::setPort(QString _comPort)
+{
+    bool l_b_RetVal = false;
+
+    m_serial.setPortName(_comPort);
+
+    if (m_serial.portName() == _comPort){
+        l_b_RetVal = true;
+    } // else
+
+    return l_b_RetVal;
+
+}
+
+bool QS_SerialThread::openSerial()
+{
+    bool l_b_RetVal = false;
+
+    if (!m_serial.open(QIODevice::ReadWrite)) {
+        emit error(tr("Can't open %1, error code %2")
+                   .arg(m_portName).arg(m_serial.error()));
+    } else {
+        l_b_RetVal = true;
+    }
+
+    return l_b_RetVal;
+
+}
+
+bool QS_SerialThread::closeSerial()
+{
+    m_serial.close();
+    return true;
 }
