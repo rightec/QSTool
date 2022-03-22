@@ -55,7 +55,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
     connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
     connect(m_p_CmdThread, SIGNAL(cmdResultReady(bool)), this, SLOT(onCmdResultReady(bool)));
-    /// m_workerThread.start();  /// TO DO Comment for now
+    m_workerThread.start();  /// TO DO Comment for now
     // Thread section ends
 
     /// BaudRate comboBox
@@ -133,7 +133,7 @@ void QuantaLoader::activateProgBar()
     l_WidgetTemp->setStyleSheet(l_S_safe);
 }
 
-bool QuantaLoader::preSendCommand()
+bool QuantaLoader::preSendCommand(int _cmdId)
 {
     bool l_b_RetVal = false;
 
@@ -141,9 +141,12 @@ bool QuantaLoader::preSendCommand()
         l_b_RetVal = true;
         /// queue command
 
+
+        m_p_CmdThread->prepCommand(_cmdId);
         /// write to log
         writeSendToLog();
-        emit operate(m_p_CmdThread->m_cmdToSend.qs_CmdId);
+
+        emit operate(_cmdId);
     } else {
         // A command is already running. Not possible to send other command
         l_b_RetVal = false;
@@ -336,21 +339,14 @@ void QuantaLoader::onFwUpdateUpdateprog()
 
 void QuantaLoader::on_m_btn_reset_clicked()
 {    
-     /// Prepare QS_BOOTP_RESET command
-     memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-     m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-     m_p_CmdThread->m_cmdToSend.qs_PayLen = 1;
-     m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-     m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-     m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_RESET; // Set command id
-     m_p_CmdThread->m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
-     m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
+    /// Prepare QS_BOOTP_RESET command
 
-     if (preSendCommand() == false){
-         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
-         if (m_msgBox.exec() == QMessageBox::Yes){
-         } ///else
-     } // else
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+    if (preSendCommand(QS_BOOTP_RESET) == false){
+        m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
+        if (m_msgBox.exec() == QMessageBox::Yes){
+        } ///else
+    } // else
 }
 
 void QuantaLoader::on_m_btn_startUpgrade_clicked()
@@ -359,17 +355,10 @@ void QuantaLoader::on_m_btn_startUpgrade_clicked()
     /// This is a dummy command
     /// Only send the Start upgrade cmd and wait the answer
 
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = 1;
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DUMMY;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_START_FW_UP; // Set command id
-    m_p_CmdThread->m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_START_FW_UP) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -380,16 +369,9 @@ void QuantaLoader::on_m_btn_readBoot_clicked()
 {
     /// Prepare QS_BOOTP_READ_BOOT command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = 1;
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_READ_BOOT; // Set command id
-    m_p_CmdThread->m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_READ_BOOT) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -400,16 +382,9 @@ void QuantaLoader::on_m_btn_readDID_clicked()
 {
     /// Prepare QS_BOOTP_READ_DEV command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = 1;
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_READ_DEV; // Set command id
-    m_p_CmdThread->m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_READ_DEV) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -420,16 +395,9 @@ void QuantaLoader::on_m_btn_readRID_clicked()
 {
     /// Prepare QS_BOOTP_READ_REV command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = 1;
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_READ_REV; // Set command id
-    m_p_CmdThread->m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_READ_REV) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -441,16 +409,9 @@ void QuantaLoader::on_m_btn_readFW_clicked()
 {
     /// Prepare QS_BOOTP_READ_FW command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = 1;
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_READ_FW; // Set command id
-    m_p_CmdThread->m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_READ_FW) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -462,22 +423,12 @@ void QuantaLoader::on_m_btn_EraseFlash_clicked()
 {
     /// Prepare QS_BOOTP_ERASE command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(m_p_CmdThread->m_cmdToSend));
-    memset(static_cast<void*>(&m_p_CmdThread->m_BankInfoToSend),0,sizeof(BANK_INFO_T));
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
     /// Retrieve Bank info
-    m_p_CmdThread->m_BankInfoToSend.BANK_Info_Ack = QS_BOOTP_OK;
-    m_p_CmdThread->m_BankInfoToSend.BANK_Info_Number = static_cast<uint8_t>( ui->m_spn_SelectBankErase->value());
+    m_p_CmdThread->setBankInfoToSend(QS_BOOTP_OK,static_cast<uint8_t>( ui->m_spn_SelectBankErase->value()));
 
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = sizeof(BANK_INFO_T);
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_ERASE; // Set command id
-    memcpy(static_cast<void*>(&m_p_CmdThread->m_cmdToSend.qs_Payload[0]),static_cast<void*>(&m_p_CmdThread->m_BankInfoToSend),sizeof(BANK_INFO_T));
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
-
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_ERASE) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -489,25 +440,13 @@ void QuantaLoader::on_m_btn_ReadFlash_clicked()
 {
     /// Prepare QS_BOOTP_READ_FLASH command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    memset(static_cast<void*>(&m_p_CmdThread->m_ReadFromFlashToSend),0,sizeof(READ_FROM_FLASH_T));
-
     /// Retrieve Address info and number of bytes to read
-    m_p_CmdThread->m_ReadFromFlashToSend.READ_Address = static_cast<uint16_t>(ui->m_spn_SelectStartRead->value());
-    m_p_CmdThread->m_ReadFromFlashToSend.READ_Info_Number = static_cast<uint16_t>(ui->m_spn_ValuesToRead->value());
+    m_p_CmdThread->setReadFlashInfoToSend(static_cast<uint16_t>(ui->m_spn_SelectStartRead->value()),
+                                          static_cast<uint16_t>(ui->m_spn_ValuesToRead->value()));
 
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = sizeof(READ_FROM_FLASH_T);
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DEF;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_READ_FLASH; // Set command id
-    m_p_CmdThread->m_cmdToSend.qs_Payload[0] = (m_p_CmdThread->m_ReadFromFlashToSend.READ_Address & 0xFF00) >> 8 ;
-    m_p_CmdThread->m_cmdToSend.qs_Payload[1] = (m_p_CmdThread->m_ReadFromFlashToSend.READ_Address & 0x00FF)  ;
-    m_p_CmdThread->m_cmdToSend.qs_Payload[2] = (m_p_CmdThread->m_ReadFromFlashToSend.READ_Info_Number & 0xFF00) >> 8 ;
-    m_p_CmdThread->m_cmdToSend.qs_Payload[3] = (m_p_CmdThread->m_ReadFromFlashToSend.READ_Info_Number & 0x00FF) ;
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_READ_FLASH) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
@@ -519,36 +458,19 @@ void QuantaLoader::on_m_btn_writeFlash_clicked()
 {
     /// Prepare QS_BOOTP_WRITE_FLASH command
 
-    memset(static_cast<void*>(&m_p_CmdThread->m_cmdToSend),0,sizeof(QS_BOOT_PROT_T));
-    memset(static_cast<void*>(&m_p_CmdThread->m_WriteInfoToSend),0,sizeof(WRITE_TO_FLASH_T));
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+
 
     /// Retrieve Bank info
-    m_p_CmdThread->m_WriteInfoToSend.WRITE_Block = static_cast<uint8_t>( ui->m_spn_SelectBankWrite->value());
-    m_p_CmdThread->m_WriteInfoToSend.WRITE_element = static_cast<uint8_t>(ui->m_spn_ValueToWrite->value());
+    m_p_CmdThread->setWriteFlashInfoToSend(static_cast<uint8_t>( ui->m_spn_SelectBankWrite->value()),
+                                           static_cast<uint8_t>(ui->m_spn_ValueToWrite->value()));
 
-    m_p_CmdThread->m_cmdToSend.qs_Stx = QS_BOOTP_STX;
-    m_p_CmdThread->m_cmdToSend.qs_PayLen = QS_BOOTP_BLOCK_SIZE;
-    m_p_CmdThread->m_cmdToSend.qs_Sender = QS_BOOTP_SENDER_SW;
-    /// This is a dummy command.
-    /// Payload[0] is the block to write
-    /// Payload[1] is the element to write
-    /// Payload[2.. 255] element +1 repeated
-    m_p_CmdThread->m_cmdToSend.qs_Policy = QS_BOOTP_POL_DUMMY;
-    m_p_CmdThread->m_cmdToSend.qs_CmdId = QS_BOOTP_WRITE_FLASH; // Set command id
-    memcpy(static_cast<void*>(&m_p_CmdThread->m_cmdToSend.qs_Payload[0]),static_cast<void*>(&m_p_CmdThread->m_WriteInfoToSend),sizeof(WRITE_TO_FLASH_T));
-    for (int i=sizeof(WRITE_TO_FLASH_T); i<QS_BOOTP_BLOCK_SIZE;i++ ){
-        m_p_CmdThread->m_cmdToSend.qs_Payload[i] = m_p_CmdThread->m_cmdToSend.qs_Payload[1] + 1;
-    }
-    m_p_CmdThread->m_cmdToSend.qs_Etx = QS_BOOTP_ETX;
 
-    if (preSendCommand() == false){
+    if (preSendCommand(QS_BOOTP_WRITE_FLASH) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
         if (m_msgBox.exec() == QMessageBox::Yes){
         } ///else
     } // else
-
-
-
 }
 
 void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
@@ -556,5 +478,13 @@ void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
     /// TO DO - Prepare command
     /// Start the full FW Upgrade command sequence
     activateProgBar();
-    emit operate(QS_BOOTP_START_FW_UP);
+
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+
+    if (preSendCommand(QS_BOOTP_START_FW_UP) == false){
+        m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
+        if (m_msgBox.exec() == QMessageBox::Yes){
+        } ///else
+    } // else
+
 }

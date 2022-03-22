@@ -29,23 +29,60 @@ public:
     void setCmdRunning(bool _isRunning){m_cmdRunning = _isRunning;}
 
     /*!
+     * \brief setBankInfoToSend: set payload info for QS_BOOTP_ERASE
+     * \param _ack
+     * \param _bankNumber
+     */
+    void setBankInfoToSend(uint8_t _ack, uint8_t _bankNumber);
+
+    /*!
+     * \brief setReadFlashInfoToSend set payload info for QS_BOOTP_READ_FLASH
+     * \param _address
+     * \param _bytes_to_read
+     */
+    void setReadFlashInfoToSend(uint16_t _address, uint16_t _bytes_to_read);
+
+    /*!
+     * \brief setWriteFlashInfoToSend  set payload info for QS_BOOTP_WRITE_FLASH
+     * \param _block
+     * \param _element
+     */
+    void setWriteFlashInfoToSend(uint8_t _block, uint8_t _element);
+
+    /*!
+     * \brief setPolicyInfo: Set policy info for the current command
+     * \param _policy
+     */
+    void setPolicyInfo(POLICY_INFO _policy);
+
+    /*!
      * \brief isCmdRunning: Get if a command is currently running
      * \return
      */
     bool isCmdRunning(){return m_cmdRunning;}
 
+    /*!
+     * \brief prepCommand: Prepare command to send
+     * \param _idCmd
+     * \return
+     */
+    bool prepCommand(int _idCmd);
+
 
     QS_BOOT_PROT_T      m_cmdToSend;
-    BANK_INFO_T         m_BankInfoToSend;
-    WRITE_TO_FLASH_T    m_WriteInfoToSend;
-    READ_FROM_FLASH_T   m_ReadFromFlashToSend;
 
 
 public slots:
 	void onRunCommand(int _idCmd);
 
 private:
-    bool m_cmdRunning;  // When true A command is currently running
+    bool                m_cmdRunning;  // When true A command is currently running
+    BANK_INFO_T         m_BankInfoToSend;
+    READ_FROM_FLASH_T   m_ReadFromFlashToSend;
+    WRITE_TO_FLASH_T    m_WriteInfoToSend;
+    POLICY_INFO         m_CurrCmdPolInfo; // Policy info of the current command
+
+
 
 signals:
 	void cmdResultReady(bool _result);

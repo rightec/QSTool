@@ -81,7 +81,7 @@ private:
      * \brief preSendCommand. Prepare the command to be sent to the low layer
      * \return: true if the command has correctly send to the low layer
      */
-    bool preSendCommand();
+    bool preSendCommand(int _cmdId);
 
     /*!
      * \brief writeSendToLog: write current send command to serial log
