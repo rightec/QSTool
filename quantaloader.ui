@@ -823,8 +823,20 @@
         <layout class="QVBoxLayout" name="m_lay_lblHeader">
          <item>
           <widget class="QLabel" name="m_lbl_ImageHead">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>500</width>
+             <height>37</height>
+            </size>
+           </property>
            <property name="text">
-            <string>TextLabel</string>
+            <string/>
            </property>
           </widget>
          </item>

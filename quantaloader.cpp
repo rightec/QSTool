@@ -1,6 +1,8 @@
 #include "quantaloader.h"
 #include "ui_quantaloader.h"
 
+#include <QUrl>
+
 QuantaLoader::QuantaLoader(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::QuantaLoader)
@@ -18,8 +20,23 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
 
     /*! Build the Header Frame*/
     QPixmap l_logo_pic;
-    l_logo_pic.load( QS_HEADER_RES);
-    ui->m_lbl_ImageHead->setPixmap(l_logo_pic);     // Place the pixmap in the label
+    QString l_S_temp = qApp->applicationDirPath() + "/" + QS_HEADER_RES;
+    if (QFile::exists(l_S_temp)) {
+        l_logo_pic.load( l_S_temp);
+        ui->m_lbl_ImageHead->setPixmap(l_logo_pic);     // Place the pixmap in the label
+        ui->m_lbl_ImageHead->setVisible(true);
+        const QPixmap *l_pixMap = ui->m_lbl_ImageHead->pixmap();
+        m_msgBox.setText("File Log exist: PixMap is" + l_S_temp);
+        if (m_msgBox.exec()){
+            //
+        } //
+    } else {
+        m_msgBox.setText("File NOT NOT exist");
+        if (m_msgBox.exec()){
+            //
+        } //
+        ui->m_lbl_ImageHead->setText("Image not found");
+    }
     ui->m_lbl_tool->setText( QS_HEADER_BOOT);
 
     /*! Select the defualt section: Upgrade section*/
