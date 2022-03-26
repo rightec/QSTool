@@ -81,6 +81,17 @@ public:
      */
     void stopSerialConnection();
 
+    /*!
+     * \brief resetCmdBuffer
+     */
+    void resetCmdBuffer();
+
+    /*!
+     * \brief queueItemInCmdBuffer
+     * \param _item
+     */
+    void queueItemInCmdBuffer(uint8_t _item);
+
     QS_BOOT_PROT_T      m_cmdToSend;
 
 
@@ -93,8 +104,8 @@ private:
     READ_FROM_FLASH_T   m_ReadFromFlashToSend;
     WRITE_TO_FLASH_T    m_WriteInfoToSend;
     POLICY_INFO         m_CurrCmdPolInfo; // Policy info of the current command
-
-
+    uint8_t             m_FullCmdBuffer[QS_BOOTP_MAX_CMD_LEN ];
+    int                 m_CmdBuffIndex;
 
 signals:
 	void cmdResultReady(bool _result);

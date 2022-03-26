@@ -54,7 +54,7 @@
 QS_SerialThread::QS_SerialThread(QObject *parent) :
     QThread(parent)
 {
-
+    m_waitTimeout = QS_SERIAL_WRITE_TIMEOUT;
 }
 
 QS_SerialThread::~QS_SerialThread()
@@ -86,22 +86,21 @@ void QS_SerialThread::run()
     m_mutex.lock();
 
     int currentWaitTimeout = m_waitTimeout;
-    QString currentRequest = m_request;
+    QString currentRequest = "Prova"; //m_request;
     m_mutex.unlock();
 
     while (!m_quit) {
 
-            if (!m_serial.open(QIODevice::ReadWrite)) {
-                emit error(tr("Can't open %1, error code %2")
-                           .arg(m_portName).arg(m_serial.error()));
-                return;
-            }
-//! [7] //! [8]
+//        if (m_serial.isOpen() == false){
+//            if (!m_serial.open(QIODevice::ReadWrite)) {
+//                emit error(tr("Can't open %1, error code %2")
+//                           .arg(m_portName).arg(m_serial.error()));
+//                return;
+//            }
+//        }
         // write request
-        const QByteArray requestData = currentRequest.toUtf8();
-        m_serial.write(requestData);
-        if (m_serial.waitForBytesWritten(m_waitTimeout)) {
-//! [8] //! [10]
+//        m_requestData = currentRequest.toUtf8();
+//        m_serial.write(m_requestData);
             // read response
             if (m_serial.waitForReadyRead(currentWaitTimeout)) {
                 QByteArray responseData = m_serial.readAll();
@@ -116,11 +115,6 @@ void QS_SerialThread::run()
                 emit timeout(tr("Wait read response timeout %1")
                              .arg(QTime::currentTime().toString()));
             }
-//! [9] //! [11]
-        } else {
-            emit timeout(tr("Wait write request timeout %1")
-                         .arg(QTime::currentTime().toString()));
-        }
         m_mutex.lock();
         m_cond.wait(&m_mutex);
         currentWaitTimeout = m_waitTimeout;
@@ -174,14 +168,41 @@ bool QS_SerialThread::openSerial()
                    .arg(m_portName).arg(m_serial.error()));
     } else {
         l_b_RetVal = true;
+        qDebug() << "QS_SerialThread::openSerial Port open and thread started";
+        this->start();
     }
-
     return l_b_RetVal;
 
 }
 
 bool QS_SerialThread::closeSerial()
 {
-    m_serial.close();
+    if (m_serial.isOpen() == true){
+        m_serial.close();
+        if (isRunning() == true){
+            terminate(); // Stop the thread
+            qDebug() << "QS_SerialThread::closeSerial Port close and thread stopped";
+        } else {
+            qDebug() << "QS_SerialThread::closeSerial Port close but thread was not running";
+        }
+    } else {
+        qDebug() << "QS_SerialThread::closeSerial Port was closed";
+    }
     return true;
+}
+
+bool QS_SerialThread::writeToSerial()
+{
+    bool l_b_RetVal = false;
+
+    m_serial.write((const char*)&m_SerialBuffer[0],m_BytesToWrite);
+    // m_serial.write(m_requestData);
+    if (m_serial.waitForBytesWritten(m_waitTimeout)) {
+        qDebug() << "QS_SerialThread::writeToSerial open and thread started";
+
+    } else {
+        emit timeout(tr("Wait write request timeout %1")
+                     .arg(QTime::currentTime().toString()));
+    }
+    return l_b_RetVal;
 }

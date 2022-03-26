@@ -61,11 +61,22 @@ public:
      */
     bool closeSerial();
 
+    /*!
+     * \brief writeToSerial
+     * \return: true if write to serial send the packet
+     */
+    bool writeToSerial();
+
+    QByteArray m_requestData;
+    uint8_t    m_SerialBuffer[QS_SERIAL_MAX_BUF_LEN ];
+    uint16_t   m_BytesToWrite;
+
 
 signals:
     void response(const QString &s);
     void error(const QString &s);
     void timeout(const QString &s);
+
 
 private:
 

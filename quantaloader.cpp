@@ -50,14 +50,16 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
         for (const QSerialPortInfo &l_info : l_infos){
             ui->m_cmb_comPort->addItem(l_info.portName());
         } // end for cycle - Filling the combo box
+    ui->m_cmb_comPort->setCurrentIndex(ui->m_cmb_comPort->count() -1); // Default is 115200
 
     /*! Thread section starts*/
     m_p_CmdThread = new QS_CmdThread(nullptr);
-    m_p_CmdThread->moveToThread(&m_workerThread);
-    connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
-    connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
-    connect(m_p_CmdThread, SIGNAL(cmdResultReady(bool)), this, SLOT(onCmdResultReady(bool)));
-    m_workerThread.start();  /// TO DO Comment for now
+    connect(m_p_CmdThread, SIGNAL(timeout(QString)), this, SLOT(onSendCmdTimeout(QString)));
+    // m_p_CmdThread->moveToThread(&m_workerThread);
+    // connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
+    // connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
+    // connect(m_p_CmdThread, SIGNAL(cmdResultReady(bool)), this, SLOT(onCmdResultReady(bool)));
+    // m_workerThread.start();  /// TO DO Comment for now
     // Thread section ends
 
     /// BaudRate comboBox
@@ -66,6 +68,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
        uint32_t l_baudRate = m_p_CmdThread->getBaudRate(l_i);
        ui->m_cmb_BaudRate->addItem(QString::number(l_baudRate,10));
     }
+    ui->m_cmb_BaudRate->setCurrentIndex(QS_SERIAL_BAUD_END -1); // Default is 115200
 
 
 }
@@ -173,49 +176,68 @@ bool QuantaLoader::preSendCommand(int _cmdId)
 
 void QuantaLoader::writeSendToLog()
 {
+    // Reset cmd buffer
+    m_p_CmdThread->resetCmdBuffer();
+
     QString l_s_write;
     uint8_t l_u8 = m_p_CmdThread->m_cmdToSend.qs_Stx;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     uint16_t l_u16 = 0;
     l_s_write = "0x" + QString::number(l_u8,16);
     l_s_write.append(" ");
+
     l_u16 = m_p_CmdThread->m_cmdToSend.qs_PayLen;
     l_u8 = (l_u16 & 0xFF00) >> 8;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" + QString::number(l_u8,16));
     l_s_write.append(" ");
-
     l_u8 = (l_u16 & 0x00FF);
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" + QString::number(l_u8,16));
     l_s_write.append(" ");
 
 
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_Sender;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
+
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_Policy;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
+
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_CmdId;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
 
     for (int i = 0; i < m_p_CmdThread->m_cmdToSend.qs_PayLen; i++){
         l_u8 = m_p_CmdThread->m_cmdToSend.qs_Payload[i];
+        m_p_CmdThread->queueItemInCmdBuffer(l_u8);
         l_s_write.append("0x" +QString::number(l_u8,16));
         l_s_write.append(" ");
     } // end payload for
 
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcLow;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
+
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcHigh;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
+
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_Etx;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
 
     ui->m_txt_serialLog->setStyleSheet("color: blue");
     ui->m_txt_serialLog->appendPlainText(l_s_write);
+
+    m_p_CmdThread->writeToSerial();
 }
 
 QuantaLoader::~QuantaLoader()
@@ -544,4 +566,11 @@ void QuantaLoader::on_m_btn_connect_clicked()
         /// Change button text
         ui->m_btn_connect->setText("DISCONNECT");
     }
+}
+
+void QuantaLoader::onSendCmdTimeout(const QString &s)
+{
+    /// TO DO Emit a message
+    /// TO DO Write in the log ??
+    qDebug() << "QuantaLoader::onSendCmdTimeout Error is: " << s;
 }

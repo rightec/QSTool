@@ -17,4 +17,6 @@
 #define    QS_SERIAL_BAUD_115200    115200
 #define    QS_SERIAL_BAUD_END       7       // Max Baud rate avail
 
+#define    QS_SERIAL_WRITE_TIMEOUT  1000
+#define    QS_SERIAL_MAX_BUF_LEN    512
 #endif // QS_SERIALDEFINE_H

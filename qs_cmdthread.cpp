@@ -12,6 +12,7 @@
 QS_CmdThread::QS_CmdThread(QObject *parent)
     : QS_SerialThread(parent)
 {
+    resetCmdBuffer(); // Init buffer
     /// No command running at the start up
     setCmdRunning(false);
 }
@@ -159,4 +160,29 @@ bool QS_CmdThread::startSerialConnection(QString _comPort, uint32_t _baudRate)
 void QS_CmdThread::stopSerialConnection()
 {
     closeSerial();
+}
+
+void QS_CmdThread::resetCmdBuffer()
+{
+    m_CmdBuffIndex = 0;
+    m_BytesToWrite = 0;
+    memset(&m_FullCmdBuffer[0],0,QS_BOOTP_MAX_CMD_LEN);
+    // m_requestData.clear();
+    memset(&m_SerialBuffer[0],0,QS_SERIAL_MAX_BUF_LEN);
+}
+
+void QS_CmdThread::queueItemInCmdBuffer(uint8_t _item)
+{
+    if (m_CmdBuffIndex < QS_BOOTP_MAX_CMD_LEN){
+        m_FullCmdBuffer[m_CmdBuffIndex] = _item;
+        // const char *c = reinterpret_cast<const char *>(&m_FullCmdBuffer[m_CmdBuffIndex]);
+        // m_requestData.append(c);
+        m_SerialBuffer[m_CmdBuffIndex] = _item;
+        m_CmdBuffIndex++;
+        m_BytesToWrite++;
+    } else {
+        // Restart the queue - This is an error
+        m_CmdBuffIndex = 0;
+        qDebug() << "QS_CmdThread::queueItemInCmdBuffer - Buffer overflow ????";
+    }
 }

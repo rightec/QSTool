@@ -26,6 +26,12 @@ public:
     ~QuantaLoader();
 
 private slots:
+    /*!
+     * \brief onSendCmdTimeout. Timeout failure when sending command
+     * \param s: Error string
+     */
+    void onSendCmdTimeout(const QString &s);
+
     void on_m_btnChoosePanel_clicked();
 
     void on_m_btn_clearUpgradeLog_clicked();
