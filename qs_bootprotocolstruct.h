@@ -34,8 +34,7 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t         ID_Info_VersionL;      /* Info Version - Low Byte */
-    uint8_t         ID_Info_VersionH;      /* Info Version - High Byte */
+    uint8_t         ID_Info_Version;      /* Info Version  */
     /* 8 bytes */
 } ID_INFO_VERSION_T;
 
@@ -85,8 +84,9 @@ typedef struct
 
 typedef struct QS_bootProt{
     uint8_t qs_Stx;                                 /*STX: Start of Message*/
-    uint16_t qs_PayLen;                             /*Payload lenght from 1 to 256 ---> Expressed as 0 to 255*/
+    uint8_t qs_PayLen;                             /*Payload lenght from 1 to 240 ---> Expressed as 1 to 240*/
                                                     /*Minimum payload lenght = 1*/
+                                                    /*In order to have max single packet = 255*/
     uint8_t qs_Sender;                              /*Sender of the packet
                                                     sender Address (0x20 for SW, 0x23 for Bootloader-FW; not specified for Application-FW)*/
     uint8_t qs_Policy;                              /* User define field*/

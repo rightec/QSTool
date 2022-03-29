@@ -54,72 +54,57 @@
 QS_SerialThread::QS_SerialThread(QObject *parent) :
     QThread(parent)
 {
-    m_waitTimeout = QS_SERIAL_WRITE_TIMEOUT;
+    m_waitWriteTimeout =QS_SERIAL_WRITE_TIMEOUT;
 }
 
 QS_SerialThread::~QS_SerialThread()
 {
-    m_mutex.lock();
     m_quit = true;
-    m_cond.wakeOne();
-    m_mutex.unlock();
     wait();
 }
 
-void QS_SerialThread::transaction(const QString &portName, int waitTimeout, const QString &request)
-{
-    const QMutexLocker locker(&m_mutex);
-    m_portName = portName;
-    m_waitTimeout = waitTimeout;
-    m_request = request;
-    if (!isRunning())
-        start();
-    else
-        m_cond.wakeOne();
-}
 
-//! [4]
 void QS_SerialThread::run()
 {
     qDebug() << "QS_SerialThread::run() - ENTER";
 
-    m_mutex.lock();
-
-    int currentWaitTimeout = m_waitTimeout;
-    QString currentRequest = "Prova"; //m_request;
-    m_mutex.unlock();
-
     while (!m_quit) {
-
-//        if (m_serial.isOpen() == false){
-//            if (!m_serial.open(QIODevice::ReadWrite)) {
-//                emit error(tr("Can't open %1, error code %2")
-//                           .arg(m_portName).arg(m_serial.error()));
-//                return;
-//            }
-//        }
-        // write request
-//        m_requestData = currentRequest.toUtf8();
-//        m_serial.write(m_requestData);
             // read response
-            if (m_serial.waitForReadyRead(currentWaitTimeout)) {
-                QByteArray responseData = m_serial.readAll();
-                while (m_serial.waitForReadyRead(10))
-                    responseData += m_serial.readAll();
+            /*if (m_enableRead == true){
+                qDebug() << "QS_SerialThread::run() - Receiving enabled" <<
+                            QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");*/
+                if (m_serial.waitForReadyRead(10000)) {
+                    QByteArray responseData = m_serial.readAll();
+                    while (m_serial.waitForReadyRead(10))
+                        responseData += m_serial.readAll();
+                    qDebug() << "QS_SerialThread::run() - Read All at: " <<
+                                QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
 
-                const QString response = QString::fromUtf8(responseData);
-//! [12]
-                emit this->response(response);
-//! [10] //! [11] //! [12]
-            } else {
-                emit timeout(tr("Wait read response timeout %1")
-                             .arg(QTime::currentTime().toString()));
-            }
-        m_mutex.lock();
-        m_cond.wait(&m_mutex);
-        currentWaitTimeout = m_waitTimeout;
-        currentRequest = m_request;
-        m_mutex.unlock();
+                    qint64 a = m_serial.bytesAvailable();
+                    if (a > 0){
+                        setReadTimeout(0); /// Reset timeout
+                        m_enableRead = false;
+                        const QString response = QString::fromUtf8(responseData);
+                        emit this->response(response);
+                    } else {
+                        /// NO Byte read
+                        a = 1;
+                    }
+                } else {
+                    setReadTimeout(0); /// Reset timeout
+                    m_enableRead = false;
+                    emit timeout(tr("Wait read response timeout %1")
+                                 .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz")));
+                }
+           /* }*/ /* else {
+                qint64 l_bytes = m_serial.bytesAvailable();
+                if (l_bytes != 0){
+                    /// Normally should not happen
+                    /// Answer from the board without any command sent
+                    /// Or an error somewhere
+                    qDebug() << "QS_SerialThread::run(): receiving data: " << l_bytes;
+                } // else
+            }*/
     }
 }
 
@@ -197,8 +182,11 @@ bool QS_SerialThread::writeToSerial()
 
     m_serial.write((const char*)&m_SerialBuffer[0],m_BytesToWrite);
     // m_serial.write(m_requestData);
-    if (m_serial.waitForBytesWritten(m_waitTimeout)) {
-        qDebug() << "QS_SerialThread::writeToSerial open and thread started";
+    if (m_serial.waitForBytesWritten(m_waitWriteTimeout)) {
+        qDebug() << "QS_SerialThread::writeToSerial open and thread started at: " <<
+                    QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
+        m_serial.flush();
+        m_enableRead = true;
 
     } else {
         emit timeout(tr("Wait write request timeout %1")

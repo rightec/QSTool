@@ -54,6 +54,12 @@ bool QS_CmdThread::prepCommand(int _idCmd)
     case QS_BOOTP_RESET:
         m_cmdToSend.qs_PayLen = 1;
         m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        setReadTimeout(QS_SERIAL_RESET_READ_TMT);
+        qDebug() << "QS_CmdThread::prepCommand - Started timeout of" <<
+                    QS_SERIAL_RESET_READ_TMT <<
+                    " at time: " <<
+                   QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
+
         break;
     case QS_BOOTP_READ_FW:
         m_cmdToSend.qs_PayLen = 1;

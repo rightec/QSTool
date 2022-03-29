@@ -26,8 +26,6 @@ public:
     explicit QS_SerialThread(QObject *parent = nullptr);
     ~QS_SerialThread() override;
 
-    void transaction(const QString &portName, int waitTimeout, const QString &request);
-
     /*!
      * \brief getBaudRate: Get Baud rate from the array
      * \param _index
@@ -67,6 +65,18 @@ public:
      */
     bool writeToSerial();
 
+    /*!
+     * \brief getReadTimeout
+     * \return Return read timeout for any commands
+     */
+    int getReadTimeout(){return m_waitTimeout;}
+
+    /*!
+     * \brief setReadTimeout
+     * \param _timeout
+     */
+    void setReadTimeout(int _timeout){m_waitTimeout = _timeout;}
+
     QByteArray m_requestData;
     uint8_t    m_SerialBuffer[QS_SERIAL_MAX_BUF_LEN ];
     uint16_t   m_BytesToWrite;
@@ -85,9 +95,9 @@ private:
     QString m_portName;
     QString m_request;
     int m_waitTimeout = 0;
-    QMutex m_mutex;
-    QWaitCondition m_cond;
+    int m_waitWriteTimeout = 0;
     bool m_quit = false;
+    bool m_enableRead = false;
     QSerialPort m_serial;
 
     uint32_t m_BaudeRatesAvail[QS_SERIAL_BAUD_END] = {

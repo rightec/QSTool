@@ -11,15 +11,15 @@
 #define QS_BOOTP_OK                 0x00 /* Command acknowledge - Use in the payload*/
 #define QS_BOOTP_FAIL               0x01 /* Command failed - Use in the payload*/
 
-#define QS_BOOTP_MAX_PAY_LEN        256  /*  Max payload lenght */
-#define QS_BOOTP_MAX_CMD_LEN        265  /*  Max command lenght */
+#define QS_BOOTP_MAX_PAY_LEN        240  /*  Max payload lenght */
+#define QS_BOOTP_MAX_CMD_LEN        255  /*  Max command lenght */
 
 #define QS_BOOTP_STX                0x02 /* (STX) */
 #define QS_BOOTP_ETX                0x03 /* (ETX) */
 
 #define QS_BOOTP_SENDER_SW          0x20 /*  Tool s/w is the sender of the packet */
-#define QS_BOOTP_SENDER_APP_FW_D    0x21 /*  Application f/w in debug version is the sender of the packet */
-#define QS_BOOTP_SENDER_APP_FW_R    0x22 /*  Application f/w in release version is the sender of the packet */
+/* #define QS_BOOTP_SENDER_APP_FW_D    0x21*/ /*  Application f/w in debug version is the sender of the packet */
+/* #define QS_BOOTP_SENDER_APP_FW_R    0x22*/ /*  Application f/w in release version is the sender of the packet */
 #define QS_BOOTP_SENDER_BOOT_FW     0x23 /*  Boot f/w is the sender of the packet */
 
 #define QS_BOOTP_RESP_OFFSET        0x80 /*  Offset for command identifier field during response */
@@ -56,8 +56,8 @@
 #define QS_BOOTP_BLOCK_SIZE     256     /* Size of the block in the flash - TO FIND IN DATASHEET*/
 
 typedef enum {
-    QS_BOOTP_POL_DEF  =          0x00, /*  Default value for the policy field */
-    QS_BOOTP_POL_DUMMY =         0x01  /*  The command is a dummy one - Dummy means "has no effect on the FW" */
-}POLICY_INFO;
+    QS_BOOTP_POL_DEF  =          QS_BOOTP_SENDER_BOOT_FW, /*  Default value for the policy field */
+    QS_BOOTP_POL_DUMMY =         0xFF  /*  The command is a dummy one - Dummy means "has no effect on the FW" */
+}POLICY_INFO;   /*This is for the sender*/
 
 #endif /* QS_BOOTPROTOCOLDEF_H*/

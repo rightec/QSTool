@@ -20,7 +20,9 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
 
     /*! Build the Header Frame*/
     QPixmap l_logo_pic;
-    QString l_S_temp = qApp->applicationDirPath() + "/" + QS_HEADER_RES;
+    QString l_S_temp;
+#ifdef LOGO_AS_FILE
+    l_S_temp = qApp->applicationDirPath() + "/" + QS_HEADER_RES;
     if (QFile::exists(l_S_temp)) {
         l_logo_pic.load( l_S_temp);
         ui->m_lbl_ImageHead->setPixmap(l_logo_pic);     // Place the pixmap in the label
@@ -37,6 +39,12 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
         } //
         ui->m_lbl_ImageHead->setText("Image not found");
     }
+
+   #else
+    l_S_temp = QS_HEADER_RES;
+    l_logo_pic.load( l_S_temp);
+    ui->m_lbl_ImageHead->setPixmap(l_logo_pic);     // Place the pixmap in the label
+#endif
     ui->m_lbl_tool->setText( QS_HEADER_BOOT);
 
     /*! Select the defualt section: Upgrade section*/
