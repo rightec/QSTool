@@ -70,22 +70,26 @@ void QS_SerialThread::run()
 
     while (!m_quit) {
             // read response
-            /*if (m_enableRead == true){
+            if (m_enableRead == true){
                 qDebug() << "QS_SerialThread::run() - Receiving enabled" <<
-                            QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");*/
-                if (m_serial.waitForReadyRead(10000)) {
-                    QByteArray responseData = m_serial.readAll();
+                            QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
+                if (m_serial.waitForReadyRead(m_waitTimeout)) {
+                    m_responseData.clear();
+                    m_responseData = m_serial.readAll();
                     while (m_serial.waitForReadyRead(10))
-                        responseData += m_serial.readAll();
+                        m_responseData += m_serial.readAll();
                     qDebug() << "QS_SerialThread::run() - Read All at: " <<
                                 QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
 
+                    setReadTimeout(0); /// Reset timeout
+                    m_enableRead = false;
+                    const QString response = QString::fromUtf8(m_responseData);
+                    emit this->response(response);
+
                     qint64 a = m_serial.bytesAvailable();
                     if (a > 0){
-                        setReadTimeout(0); /// Reset timeout
-                        m_enableRead = false;
-                        const QString response = QString::fromUtf8(responseData);
-                        emit this->response(response);
+                        ///
+                        a = 2;
                     } else {
                         /// NO Byte read
                         a = 1;
@@ -96,7 +100,7 @@ void QS_SerialThread::run()
                     emit timeout(tr("Wait read response timeout %1")
                                  .arg(QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz")));
                 }
-           /* }*/ /* else {
+            }  else {
                 qint64 l_bytes = m_serial.bytesAvailable();
                 if (l_bytes != 0){
                     /// Normally should not happen
@@ -104,7 +108,7 @@ void QS_SerialThread::run()
                     /// Or an error somewhere
                     qDebug() << "QS_SerialThread::run(): receiving data: " << l_bytes;
                 } // else
-            }*/
+            }
     }
 }
 

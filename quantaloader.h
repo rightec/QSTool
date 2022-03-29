@@ -27,6 +27,11 @@ public:
 
 private slots:
     /*!
+     * \brief onResponse: Slot catching the answer from serial
+     * \param s
+     */
+    void onResponse(const QString &s);
+    /*!
      * \brief onSendCmdTimeout. Timeout failure when sending command
      * \param s: Error string
      */
@@ -95,6 +100,12 @@ private:
      * \brief writeSendToLog: write current send command to serial log
      */
     void writeSendToLog();
+
+    /*!
+     * \brief writeReadToLog: Write the command answer to the log
+     * \param _string
+     */
+    void writeReadToLog(QString _string);
 
     /*!
      * \brief enableCmdButton: Enable/Disable all the command buttons on both panels

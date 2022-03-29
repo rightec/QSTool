@@ -77,6 +77,7 @@ public:
      */
     void setReadTimeout(int _timeout){m_waitTimeout = _timeout;}
 
+    QByteArray m_responseData;
     QByteArray m_requestData;
     uint8_t    m_SerialBuffer[QS_SERIAL_MAX_BUF_LEN ];
     uint16_t   m_BytesToWrite;

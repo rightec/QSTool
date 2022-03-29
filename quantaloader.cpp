@@ -80,6 +80,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     /*! Thread section starts*/
     m_p_CmdThread = new QS_CmdThread(nullptr);
     connect(m_p_CmdThread, SIGNAL(timeout(QString)), this, SLOT(onSendCmdTimeout(QString)));
+    connect(m_p_CmdThread, SIGNAL(response(QString)), this, SLOT(onResponse(QString)));
     // m_p_CmdThread->moveToThread(&m_workerThread);
     // connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
     // connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
@@ -204,7 +205,84 @@ void QuantaLoader::writeSendToLog()
     // Reset cmd buffer
     m_p_CmdThread->resetCmdBuffer();
 
-    QString l_s_write;
+    /// STX
+    QString l_s_write = "TX: ";
+    uint8_t l_u8 = m_p_CmdThread->m_cmdToSend.qs_Stx;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" + QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// PAYLOAD LENGTH
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_PayLen;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" + QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// SENDER
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_Sender;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" +QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// POLICY
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_Policy;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" +QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// COMMAND ID
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_CmdId;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" +QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// PAYLOAD
+    for (int i = 0; i < m_p_CmdThread->m_cmdToSend.qs_PayLen; i++){
+        l_u8 = m_p_CmdThread->m_cmdToSend.qs_Payload[i];
+        m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+        l_s_write.append("0x" +QString::number(l_u8,16));
+        l_s_write.append(" ");
+    } // end payload for
+
+    /// CRC LOW
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcLow;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" +QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// CRC HIGH
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcHigh;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" +QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    /// ETX
+    l_u8 = m_p_CmdThread->m_cmdToSend.qs_Etx;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+    l_s_write.append("0x" +QString::number(l_u8,16));
+    l_s_write.append(" ");
+
+    ui->m_txt_serialLog->setStyleSheet("color: blue");
+    ui->m_txt_serialLog->appendPlainText(l_s_write);
+
+    m_p_CmdThread->writeToSerial();
+}
+
+void QuantaLoader::writeReadToLog(QString _string)
+{
+    QString l_s_write = "RX: ";
+    int l_i_Size = m_p_CmdThread->m_responseData.size();
+    qDebug() << "QuantaLoader::writeReadToLog red bytes: " << l_i_Size;
+    for (int i= 0; i<l_i_Size; i++){
+         uint8_t l_u8 = static_cast<uint8_t>(m_p_CmdThread->m_responseData.at(i));
+         l_s_write.append("0x" +QString::number(l_u8,16));
+         l_s_write.append(" ");
+    }
+
+    ui->m_txt_serialLog->appendPlainText(l_s_write);
+    ui->m_txt_serialLog->setStyleSheet("color: green");
+
+    /* TO PARSE
     uint8_t l_u8 = m_p_CmdThread->m_cmdToSend.qs_Stx;
     m_p_CmdThread->queueItemInCmdBuffer(l_u8);
     uint16_t l_u16 = 0;
@@ -263,7 +341,9 @@ void QuantaLoader::writeSendToLog()
     ui->m_txt_serialLog->appendPlainText(l_s_write);
 
     m_p_CmdThread->writeToSerial();
+    */
 }
+
 
 QuantaLoader::~QuantaLoader()
 {
@@ -598,4 +678,12 @@ void QuantaLoader::onSendCmdTimeout(const QString &s)
     /// TO DO Emit a message
     /// TO DO Write in the log ??
     qDebug() << "QuantaLoader::onSendCmdTimeout Error is: " << s;
+}
+
+void QuantaLoader::onResponse(const QString &s)
+{
+    /// TO DO paring the message
+    /// Write row in the log
+    qDebug() << "QuantaLoader::onResponse. Catched data are: " << s;
+    writeReadToLog(s);
 }
