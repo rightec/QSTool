@@ -11,6 +11,7 @@
 #define QS_BOOTP_OK                 0x00 /* Command acknowledge - Use in the payload*/
 #define QS_BOOTP_FAIL               0x01 /* Command failed - Use in the payload*/
 
+#define QS_BOOTP_MIN_PAY_LEN          4  /*  Min payload lenght */
 #define QS_BOOTP_MAX_PAY_LEN        240  /*  Max payload lenght */
 #define QS_BOOTP_MAX_CMD_LEN        255  /*  Max command lenght */
 

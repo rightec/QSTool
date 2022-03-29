@@ -52,8 +52,10 @@ bool QS_CmdThread::prepCommand(int _idCmd)
     switch (_idCmd)
     {
     case QS_BOOTP_RESET:
-        m_cmdToSend.qs_PayLen = 1;
-        m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        for (int l_i = 0; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         setReadTimeout(QS_SERIAL_RESET_READ_TMT);
         qDebug() << "QS_CmdThread::prepCommand - Started timeout of" <<
                     QS_SERIAL_RESET_READ_TMT <<
@@ -62,23 +64,31 @@ bool QS_CmdThread::prepCommand(int _idCmd)
 
         break;
     case QS_BOOTP_READ_FW:
-        m_cmdToSend.qs_PayLen = 1;
-        m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        for (int l_i = 0; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         setReadTimeout(QS_SERIAL_READ_FW_READ_TMT);
         break;
     case QS_BOOTP_READ_REV:
-        m_cmdToSend.qs_PayLen = 1;
-        m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        for (int l_i = 0; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         setReadTimeout(QS_SERIAL_READ_REV_READ_TMT);
         break;
     case QS_BOOTP_READ_DEV:
-        m_cmdToSend.qs_PayLen = 1;
-        m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        for (int l_i = 0; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         setReadTimeout(QS_SERIAL_READ_DEV_READ_TMT);
         break;
     case QS_BOOTP_READ_BOOT:
-        m_cmdToSend.qs_PayLen = 1;
-        m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        for (int l_i = 0; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         setReadTimeout(QS_SERIAL_READ_BOOT_READ_TMT);
         break;
     case QS_BOOTP_RES:
@@ -112,8 +122,10 @@ bool QS_CmdThread::prepCommand(int _idCmd)
 
         break;
     case QS_BOOTP_START_FW_UP:
-        m_cmdToSend.qs_PayLen = 1;
-        m_cmdToSend.qs_Payload[0] = QS_BOOTP_VOID_PAYLOAD;
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        for (int l_i = 0; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         if (m_CurrCmdPolInfo == QS_BOOTP_POL_DEF){
             /// TO DO - Execute the full upgrade procedure
         } else {
