@@ -51,7 +51,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     setGuiSection(QS_FW_UPGRADE_SECTION);
 
     /*! Setting boundary values*/
-    ui->m_spn_SelectBankWrite->setMaximum(QS_BOOTP_MAX_BAK_NUM);
+    // TO DELETE ui->m_spn_SelectBankWrite->setMaximum(QS_BOOTP_MAX_BAK_NUM);
     ui->m_spn_SelectBankErase->setMaximum(QS_BOOTP_MAX_BAK_NUM);
     ui->m_spn_SelectStartRead->setMaximum(QS_BOOTP_FLASH_MEM_SIZE -1); // Flash size - 1 bytes
 
@@ -237,12 +237,14 @@ void QuantaLoader::writeSendToLog()
     l_s_write.append(" ");
 
     /// PAYLOAD
+    qDebug() << "QuantaLoader::writeSendToLog payload len:  " << m_p_CmdThread->m_cmdToSend.qs_PayLen;
     for (int i = 0; i < m_p_CmdThread->m_cmdToSend.qs_PayLen; i++){
         l_u8 = m_p_CmdThread->m_cmdToSend.qs_Payload[i];
         m_p_CmdThread->queueItemInCmdBuffer(l_u8);
         l_s_write.append("0x" +QString::number(l_u8,16));
         l_s_write.append(" ");
     } // end payload for
+    qDebug() << "QuantaLoader::writeSendToLog end sending payload ";
 
     /// CRC LOW
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcLow;
@@ -601,12 +603,16 @@ void QuantaLoader::on_m_btn_writeFlash_clicked()
 {
     /// Prepare QS_BOOTP_WRITE_FLASH command
 
-    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+// TO RESTORE    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
 
 
     /// Retrieve Bank info
-    m_p_CmdThread->setWriteFlashInfoToSend(static_cast<uint8_t>( ui->m_spn_SelectBankWrite->value()),
+    /* TO DELETE m_p_CmdThread->setWriteFlashInfoToSend(static_cast<uint8_t>( ui->m_spn_SelectBankWrite->value()),
                                            static_cast<uint8_t>(ui->m_spn_ValueToWrite->value()));
+    */
+    QString l_s_WriteString = ui->m_txtStringToWrite->toPlainText();
+    m_p_CmdThread->setWriteFlashInfoToSend(l_s_WriteString);
 
 
     if (preSendCommand(QS_BOOTP_WRITE_FLASH) == false){

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
+    <width>1105</width>
     <height>800</height>
    </rect>
   </property>
@@ -29,9 +29,9 @@
    <widget class="QFrame" name="m_frm_PanelCmd">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>160</y>
-      <width>691</width>
+      <x>140</x>
+      <y>200</y>
+      <width>971</width>
       <height>451</height>
      </rect>
     </property>
@@ -152,7 +152,7 @@
            <item>
             <widget class="QLabel" name="m_lblSelectBankWrite">
              <property name="text">
-              <string>Select Bank</string>
+              <string>Write HEX String</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -160,27 +160,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QSpinBox" name="m_spn_SelectBankWrite"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="m_lblValueToWrite">
-             <property name="text">
-              <string>Value to write: 0x</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="m_spn_ValueToWrite">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-             <property name="displayIntegerBase">
-              <number>16</number>
-             </property>
-            </widget>
+            <widget class="QTextEdit" name="m_txtStringToWrite"/>
            </item>
           </layout>
          </item>
@@ -233,7 +213,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Erase Single Flash Bank</string>
+            <string>Erase &quot;N&quot; Flash Bank</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -245,7 +225,7 @@
            <item>
             <widget class="QLabel" name="m_lblSelectBankErase">
              <property name="text">
-              <string>Select Bank</string>
+              <string>Select Number of Banks</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>

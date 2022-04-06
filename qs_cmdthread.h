@@ -8,6 +8,8 @@
 #include <QObject>
 #include <QThread>
 #include <QDebug>
+#include <QBuffer>
+#include <QDataStream>
 
 #include "qs_bootprotocoldef.h"
 #include "qs_bootprotocolstruct.h"
@@ -45,9 +47,15 @@ public:
     /*!
      * \brief setWriteFlashInfoToSend  set payload info for QS_BOOTP_WRITE_FLASH
      * \param _block
-     * \param _element
+     * \param _element     
+     * void setWriteFlashInfoToSend(uint8_t _block, uint8_t _element);
+    */
+
+    /*!
+     * \brief setWriteFlashInfoToSend
+     * \param _hexString
      */
-    void setWriteFlashInfoToSend(uint8_t _block, uint8_t _element);
+    void setWriteFlashInfoToSend(QString _hexString);
 
     /*!
      * \brief setPolicyInfo: Set policy info for the current command
@@ -99,13 +107,13 @@ public slots:
 	void onRunCommand(int _idCmd);
 
 private:
-    bool                m_cmdRunning;  // When true A command is currently running
-    BANK_INFO_T         m_BankInfoToSend;
-    READ_FROM_FLASH_T   m_ReadFromFlashToSend;
-    WRITE_TO_FLASH_T    m_WriteInfoToSend;
-    POLICY_INFO         m_CurrCmdPolInfo; // Policy info of the current command
-    uint8_t             m_FullCmdBuffer[QS_BOOTP_MAX_CMD_LEN ];
-    int                 m_CmdBuffIndex;
+    bool                        m_cmdRunning;  // When true A command is currently running
+    BANK_INFO_T                 m_BankInfoToSend;
+    READ_FROM_FLASH_T           m_ReadFromFlashToSend;
+    WRITE_TO_BUFFER_FLASH_T     m_WriteInfoToSend;
+    POLICY_INFO                 m_CurrCmdPolInfo; // Policy info of the current command
+    uint8_t                     m_FullCmdBuffer[QS_BOOTP_MAX_CMD_LEN ];
+    int                         m_CmdBuffIndex;
 
 signals:
 	void cmdResultReady(bool _result);

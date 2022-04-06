@@ -96,8 +96,11 @@ bool QS_CmdThread::prepCommand(int _idCmd)
         l_bo_Result = false;
         break;
     case QS_BOOTP_ERASE:
-        m_cmdToSend.qs_PayLen = sizeof(BANK_INFO_T);
-        memcpy(static_cast<void*>(&m_cmdToSend.qs_Payload[0]),static_cast<void*>(&m_BankInfoToSend),sizeof(BANK_INFO_T));
+        m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
+        m_cmdToSend.qs_Payload[0] = m_BankInfoToSend.BANK_Info_Number;
+        for (int l_i = 1; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+            m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+        }
         setReadTimeout(QS_SERIAL_ERASE_READ_TMT);
         break;
     case QS_BOOTP_READ_FLASH:
@@ -109,15 +112,23 @@ bool QS_CmdThread::prepCommand(int _idCmd)
         setReadTimeout(QS_SERIAL_READ_FLASH_READ_TMT);
         break;
     case QS_BOOTP_WRITE_FLASH:
-        m_cmdToSend.qs_PayLen = QS_BOOTP_BLOCK_SIZE;
+        m_cmdToSend.qs_PayLen = m_WriteInfoToSend.WRITE_LEN;
         /// This is a dummy command.
         /// Payload[0] is the block to write
         /// Payload[1] is the element to write
         /// Payload[2.. 255] element +1 repeated
-        memcpy(static_cast<void*>(&m_cmdToSend.qs_Payload[0]),static_cast<void*>(&m_WriteInfoToSend),sizeof(WRITE_TO_FLASH_T));
-        for (int i=sizeof(WRITE_TO_FLASH_T); i<QS_BOOTP_BLOCK_SIZE;i++ ){
-            m_cmdToSend.qs_Payload[i] = m_cmdToSend.qs_Payload[1] + 1;
+        // memcpy(static_cast<void*>(&m_cmdToSend.qs_Payload[0]),static_cast<void*>(&m_WriteInfoToSend.WRITE_Block[0]),m_cmdToSend.qs_PayLen);
+
+        for (int i=0; i<m_cmdToSend.qs_PayLen;i++ ){
+            m_cmdToSend.qs_Payload[i] = m_WriteInfoToSend.WRITE_Block[i];
+        } // end for
+
+        if (m_cmdToSend.qs_PayLen < QS_BOOTP_VOID_PAYLOAD){
+            for (int l_i = m_cmdToSend.qs_PayLen; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+                m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
+            }
         }
+
         setReadTimeout(QS_SERIAL_WRITE_FLASH_READ_TMT);
 
         break;
@@ -140,6 +151,7 @@ bool QS_CmdThread::prepCommand(int _idCmd)
         break;
     } // end switch
 
+    qDebug() << " QS_CmdThread::prepCommand started: payload len is " << m_cmdToSend.qs_PayLen;
     return l_bo_Result;
 }
 
@@ -157,12 +169,36 @@ void QS_CmdThread::setReadFlashInfoToSend(uint16_t _address, uint16_t _bytes_to_
     m_ReadFromFlashToSend.READ_Info_Number = _bytes_to_read;
 }
 
+
+void QS_CmdThread::setWriteFlashInfoToSend(QString _hexString)
+{
+    QByteArray l_byteArray;
+    QString l_qs = _hexString;
+    int l_len = 0;
+
+    l_byteArray += l_qs;
+    l_len = l_byteArray.size();
+
+    if (l_len > QS_BOOTP_BLOCK_SIZE)
+    {
+        l_len = QS_BOOTP_BLOCK_SIZE;
+    } // else
+
+    memset(static_cast<void*>(&m_WriteInfoToSend.WRITE_Block[0]),0,QS_BOOTP_BLOCK_SIZE);
+    for (int l_i = 0; l_i< l_len; l_i++){
+        m_WriteInfoToSend.WRITE_Block[l_i] = static_cast<uint8_t>(l_byteArray.at(l_i));
+    } // end for
+
+    m_WriteInfoToSend.WRITE_LEN = static_cast<uint8_t>(l_len);
+}
+/*
 void QS_CmdThread::setWriteFlashInfoToSend(uint8_t _block, uint8_t _element)
 {
     memset(static_cast<void*>(&m_WriteInfoToSend),0,sizeof(WRITE_TO_FLASH_T));
     m_WriteInfoToSend.WRITE_Block = _block;
     m_WriteInfoToSend.WRITE_element = _element;
 }
+*/
 
 void QS_CmdThread::setPolicyInfo(POLICY_INFO _policy)
 {
@@ -201,6 +237,8 @@ void QS_CmdThread::resetCmdBuffer()
 
 void QS_CmdThread::queueItemInCmdBuffer(uint8_t _item)
 {
+    qDebug() << "QS_CmdThread::queueItemInCmdBuffer - m_CmdBuffIndex" << m_CmdBuffIndex;
+
     if (m_CmdBuffIndex < QS_BOOTP_MAX_CMD_LEN){
         m_FullCmdBuffer[m_CmdBuffIndex] = _item;
         // const char *c = reinterpret_cast<const char *>(&m_FullCmdBuffer[m_CmdBuffIndex]);

@@ -82,6 +82,17 @@ typedef struct
     uint8_t         WRITE_element;          /* Element to write */
 }WRITE_TO_FLASH_T;
 
+
+/*!
+ *  \typedef Stuctrured type to be used as payload in the following commands:
+ *  WRITE when coming from SW
+ */
+typedef struct
+{
+    uint8_t         WRITE_Block[QS_BOOTP_BLOCK_SIZE];            /* Block to write */
+    uint8_t         WRITE_LEN;
+}WRITE_TO_BUFFER_FLASH_T;
+
 typedef struct QS_bootProt{
     uint8_t qs_Stx;                                 /*STX: Start of Message*/
     uint8_t qs_PayLen;                             /*Payload lenght from 1 to 240 ---> Expressed as 1 to 240*/
