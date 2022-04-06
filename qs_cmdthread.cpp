@@ -151,6 +151,15 @@ bool QS_CmdThread::prepCommand(int _idCmd)
         break;
     } // end switch
 
+    uint8_t *crc_l = &m_cmdToSend.qs_CrcLow;
+    uint8_t *crc_h = &m_cmdToSend.qs_CrcHigh;
+    uint16_t crc_initial = 0x0000;
+    uint8_t lenTxDecoder = m_cmdToSend.qs_PayLen;
+    uint8_t *pBuf = &m_cmdToSend.qs_Payload[0];
+
+    // CalcCrc16_Poly(0x0000, 0x8005, answerBuf, lenTxDecoder, &crcDecoderL, &crcDecoderH);
+    CalcCrc16_Poly(crc_initial, POLY_IBM, pBuf, lenTxDecoder, crc_l, crc_h);
+
     qDebug() << " QS_CmdThread::prepCommand started: payload len is " << m_cmdToSend.qs_PayLen;
     return l_bo_Result;
 }
@@ -168,7 +177,6 @@ void QS_CmdThread::setReadFlashInfoToSend(uint16_t _address, uint16_t _bytes_to_
     m_ReadFromFlashToSend.READ_Address = _address;
     m_ReadFromFlashToSend.READ_Info_Number = _bytes_to_read;
 }
-
 
 void QS_CmdThread::setWriteFlashInfoToSend(QString _hexString)
 {

@@ -93,20 +93,34 @@ typedef struct
     uint8_t         WRITE_LEN;
 }WRITE_TO_BUFFER_FLASH_T;
 
+
 typedef struct QS_bootProt{
     uint8_t qs_Stx;                                 /*STX: Start of Message*/
-    uint8_t qs_PayLen;                             /*Payload lenght from 1 to 240 ---> Expressed as 1 to 240*/
+    uint8_t qs_PayLen;                             /*Payload lenght from 1 to 256 ---> Expressed as 0 to 255*/
                                                     /*Minimum payload lenght = 1*/
-                                                    /*In order to have max single packet = 255*/
-    uint8_t qs_Sender;                              /*Sender of the packet
-                                                    sender Address (0x20 for SW, 0x23 for Bootloader-FW; not specified for Application-FW)*/
-    uint8_t qs_Policy;                              /* User define field*/
+                                                    
+    uint8_t qs_Sender;                              /* Sender of the packet (node source address)
+                                                    sender Address (0x20 for PC, 0x23 for Board)*/
+
+    uint8_t qs_Policy;                              
+
+        /* Destination address : status + ID = .0x80 = boot attivo 
+                                               .0x40 = debug attivo
+                                               0x00-0x3F -> device ID 0-64
+         * 
+         * 00 10 0011
+         *    ----------> ID             (0x00->0x3F)
+         *  ------------> debug /release  (1=debug)
+         * -------------> boot /app      (1=boot)
+         *  */
+
     uint8_t qs_CmdId;                               /*Command identifier field*/
     uint8_t qs_Payload[QS_BOOTP_MAX_PAY_LEN];       /*Payload field*/
     uint8_t qs_CrcLow;                              /*CRC-16 low byte*/
     uint8_t qs_CrcHigh;                             /*CRC-16 high byte*/
     uint8_t qs_Etx;                                 /*ETX: End of Message*/
 } QS_BOOT_PROT_T;
+
 
 
 #endif /* QS_BOOTPROTOCOLSTRUCT_H*/

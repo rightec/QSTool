@@ -28,6 +28,7 @@ SOURCES += \
         main.cpp \
         qs_bootprotocol.cpp \
         qs_cmdthread.cpp \
+        qs_crc16.c \
         qs_serialthread.cpp \
         quantaloader.cpp
 
@@ -36,6 +37,7 @@ HEADERS += \
         qs_bootprotocoldef.h \
         qs_bootprotocolstruct.h \
         qs_cmdthread.h \
+        qs_crc16.h \
         qs_guidefine.h \
         qs_serialdefine.h \
         qs_serialthread.h \

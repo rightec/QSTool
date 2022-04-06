@@ -16,6 +16,7 @@
 #include <QDebug>
 
 #include "qs_serialdefine.h"
+#include "qs_crc16.h"
 
 
 class QS_SerialThread : public QThread
