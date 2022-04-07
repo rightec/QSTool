@@ -37,4 +37,11 @@ typedef enum {
     QS_FW_UPGRADE_SECTION = 1,
 }QS_PanelSection;
 
+typedef enum {
+    QS_NO_ERROR = 0,
+    QS_ERROR_DETECTED = 1,
+    QS_WRITE_TX = 2,
+    QS_WRITE_RX = 3
+}QS_SignalLevel;
+
 #endif // QS_GUIDEFINE_H

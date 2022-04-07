@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QSerialPortInfo>
+#include <QTextEdit>
 
 #include "qs_guidefine.h"
 #include "qs_cmdthread.h"
@@ -112,6 +113,14 @@ private:
      * \param _enable
      */
     void enableCmdButton(bool _enable);
+
+    /*!
+     * \brief setLogColorByLevel: Method used to differentiate color in the log
+     * \param _refTextEdit
+     * \param _errLevel
+     * \param _textToWrite
+     */
+    void setLogColorByLevel(QTextEdit *_refTextEdit, QS_SignalLevel _errLevel, QString _textToWrite);
 
 private slots:
     void onCmdResultReady(bool _res);

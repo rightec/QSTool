@@ -264,8 +264,10 @@ void QuantaLoader::writeSendToLog()
     l_s_write.append("0x" +QString::number(l_u8,16));
     l_s_write.append(" ");
 
-    ui->m_txt_serialLog->setStyleSheet("color: blue");
-    ui->m_txt_serialLog->appendPlainText(l_s_write);
+//    ui->m_txt_serialLog->setStyleSheet("color: blue");
+//    ui->m_txt_serialLog->insertHtml(l_s_write);
+
+    setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_TX, l_s_write);
 
     m_p_CmdThread->writeToSerial();
 }
@@ -281,8 +283,10 @@ void QuantaLoader::writeReadToLog(QString _string)
          l_s_write.append(" ");
     }
 
-    ui->m_txt_serialLog->appendPlainText(l_s_write);
-    ui->m_txt_serialLog->setStyleSheet("color: green");
+//    ui->m_txt_serialLog->insertHtml(l_s_write);
+//    ui->m_txt_serialLog->setStyleSheet("color: green");
+
+    setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_RX, l_s_write);
 
     /* TO PARSE
     uint8_t l_u8 = m_p_CmdThread->m_cmdToSend.qs_Stx;
@@ -344,6 +348,43 @@ void QuantaLoader::writeReadToLog(QString _string)
 
     m_p_CmdThread->writeToSerial();
     */
+}
+
+void QuantaLoader::setLogColorByLevel(QTextEdit *_refTextEdit, QS_SignalLevel _errLevel, QString _textToWrite)
+{
+    QString l_line = _textToWrite;
+    QTextCursor l_cursor = _refTextEdit->textCursor();
+    QString l_alertHtml = "<font color=\"Red\">";
+    QString l_notifyHtml = "<font color=\"Green\">";
+    QString l_infoHtml = "<font color=\"Aqua\">";
+    QString l_infoHtmlTx = "<font color=\"Black\">";
+    QString l_infoHtmlRx = "<font color=\"Blue\">";
+    QString l_endHtml = "</font><br>";
+    int level = static_cast<int>(_errLevel);
+
+    switch(level)
+    {
+    case QS_WRITE_TX:
+        l_line = l_infoHtmlTx + l_line;
+        break;
+    case QS_WRITE_RX:
+        l_line = l_infoHtmlRx + l_line;
+        break;
+    case QS_ERROR_DETECTED:
+        l_line = l_alertHtml + l_line;
+        break;
+    case QS_NO_ERROR:
+        l_line = l_notifyHtml + l_line;
+        break;
+    default:
+        l_line = l_infoHtml + l_line;
+        break;
+    }
+
+    l_line = l_line + l_endHtml;
+    _refTextEdit->insertHtml(l_line);
+    l_cursor.movePosition(QTextCursor::End);
+    _refTextEdit->setTextCursor(l_cursor);
 }
 
 

@@ -743,7 +743,7 @@
       </item>
      </layout>
     </widget>
-    <widget class="QPlainTextEdit" name="m_txt_serialLog">
+    <widget class="QTextEdit" name="m_txt_serialLog">
      <property name="geometry">
       <rect>
        <x>10</x>

@@ -123,10 +123,11 @@ bool QS_CmdThread::prepCommand(int _idCmd)
             m_cmdToSend.qs_Payload[i] = m_WriteInfoToSend.WRITE_Block[i];
         } // end for
 
-        if (m_cmdToSend.qs_PayLen < QS_BOOTP_VOID_PAYLOAD){
+        if (m_cmdToSend.qs_PayLen < QS_BOOTP_MIN_PAY_LEN){
             for (int l_i = m_cmdToSend.qs_PayLen; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
                 m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
             }
+            m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
         }
 
         setReadTimeout(QS_SERIAL_WRITE_FLASH_READ_TMT);
