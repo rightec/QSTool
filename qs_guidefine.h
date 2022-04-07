@@ -32,6 +32,17 @@
 #define QS_ERR_CMD_CURR_SEND        "A Command is already sending"
 #define QS_ERR_CMD_CONN_FAIL        "Connection failure"
 
+
+#define QS_BOOTP_NO_ERROR_STN           " Rx message No error detected "
+#define QS_BOOTP_ERR_RX_LEN_STN         " Rx message lenght less than minimum expected "
+#define QS_BOOTP_ERR_WRONG_STX_STN      " Rx message lenght STX not received  "
+#define QS_BOOTP_ERR_WRONG_PAYLEN_STN   " Rx message Wrong payload length  "
+#define QS_BOOTP_ERR_POLICY_STN         " Rx message Wrong policy   "
+#define QS_BOOTP_ERR_CMD_ID_STN         " Rx message CMD ID not as expected "
+#define QS_BOOTP_ERR_CRC_STN            " Rx message CRC Error   "
+#define QS_BOOTP_ERR_WRONG_ETX_STN      " Rx message lenght ETX not received"
+
+
 typedef enum {
     QS_CMD_PANEL_SECTION = 0,
     QS_FW_UPGRADE_SECTION = 1,

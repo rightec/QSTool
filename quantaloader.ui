@@ -1086,7 +1086,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPlainTextEdit" name="m_txt_upgradeLog"/>
+      <widget class="QTextEdit" name="m_txt_upgradeLog"/>
      </item>
      <item>
       <widget class="QPushButton" name="m_btn_clearUpgradeLog">

@@ -14,6 +14,7 @@
 #include "qs_bootprotocoldef.h"
 #include "qs_bootprotocolstruct.h"
 #include "qs_serialthread.h"
+#include "qs_bootprotocolerrordefine.h"
 
 
 class QS_CmdThread : public QS_SerialThread
@@ -100,6 +101,12 @@ public:
      */
     void queueItemInCmdBuffer(uint8_t _item);
 
+    /*!
+     * \brief parseRxData
+     */
+    void parseRxData();
+
+
     QS_BOOT_PROT_T      m_cmdToSend;
 
 
@@ -114,8 +121,22 @@ private:
     POLICY_INFO                 m_CurrCmdPolInfo; // Policy info of the current command
     uint8_t                     m_FullCmdBuffer[QS_BOOTP_MAX_CMD_LEN ];
     int                         m_CmdBuffIndex;
+    int                         m_ProtcolError;
+
+    /*!
+     * \brief setProtError: Set protcol error var
+     * \param _err
+     */
+    void setProtError(int _err);
+
+    /*!
+     * \brief verifyPolicy: Verify if the policy is correct
+     * \param _char
+     * \return
+     */
+    bool verifyPolicy(char _char);
 
 signals:
 	void cmdResultReady(bool _result);
-
+    void protErrorFound(int _err);
 };

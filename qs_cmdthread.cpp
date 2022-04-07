@@ -246,7 +246,7 @@ void QS_CmdThread::resetCmdBuffer()
 
 void QS_CmdThread::queueItemInCmdBuffer(uint8_t _item)
 {
-    qDebug() << "QS_CmdThread::queueItemInCmdBuffer - m_CmdBuffIndex" << m_CmdBuffIndex;
+    // qDebug() << "QS_CmdThread::queueItemInCmdBuffer - m_CmdBuffIndex" << m_CmdBuffIndex;
 
     if (m_CmdBuffIndex < QS_BOOTP_MAX_CMD_LEN){
         m_FullCmdBuffer[m_CmdBuffIndex] = _item;
@@ -261,3 +261,114 @@ void QS_CmdThread::queueItemInCmdBuffer(uint8_t _item)
         qDebug() << "QS_CmdThread::queueItemInCmdBuffer - Buffer overflow ????";
     }
 }
+
+void QS_CmdThread::parseRxData()
+{
+    uint8_t l_crcLow = 0;
+    uint8_t l_crcHigh = 0;
+    uint8_t l_tempParse = 0;
+    uint8_t l_payloadLen = 0;
+    uint16_t l_msgLen = 0;
+    uint8_t l_crcBuffer[QS_BOOTP_MAX_CMD_LEN];
+    bool l_b_retVal = false;
+    int l_i_parseCount = 0;
+    int l_i_Size =m_responseData.size();
+
+    qDebug() << "QS_CmdThread::parseRxData()";
+
+    setProtError(1000);
+
+    if (l_i_Size < QS_BOOTP_MIN_CMD_LEN){
+        setProtError(QS_BOOTP_ERR_RX_LEN);
+    } else {
+        /// Start Parsing
+        if (m_responseData.at(l_i_parseCount) == QS_BOOTP_STX){
+            qDebug() << "QS_CmdThread::parseRxData() STX DONE";
+            l_i_parseCount++;
+            l_payloadLen = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+            if ((l_payloadLen <=QS_BOOTP_MAX_PAY_LEN ) && (l_payloadLen >= QS_BOOTP_MIN_PAY_LEN)){
+                qDebug() << "QS_CmdThread::parseRxData() PAYLOAD LEN DONE";
+                l_i_parseCount++;
+                /// Is the sender
+                /// TO DO verifyTheSender();
+                l_i_parseCount++;
+                /// Is the policy
+                l_b_retVal = verifyPolicy(m_responseData.at(l_i_parseCount));
+                if (l_b_retVal == true){
+                    qDebug() << "QS_CmdThread::parseRxData() POLICY DONE";
+                    l_i_parseCount++;
+                    /// Is the cmd
+                    l_tempParse = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+                    if ((l_tempParse - QS_BOOTP_RESP_OFFSET) == m_cmdToSend.qs_CmdId){
+                        qDebug() << "QS_CmdThread::parseRxData() CMD DONE";
+                        /// Payload
+                        l_i_parseCount = l_i_parseCount + l_payloadLen;
+                        l_i_parseCount++;
+                        l_crcLow = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+                        l_i_parseCount++;
+                        l_crcHigh = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+
+                        memset(l_crcBuffer,0,QS_BOOTP_MAX_CMD_LEN);
+                        /* From LEN to the last of the payload buffer */
+                        l_msgLen = QS_BOOTP_MIN_CMD_LEN - QS_BOOTP_MIN_PAY_LEN +l_payloadLen -1 -1 -2;
+                        for (int i = 1; i <= l_msgLen; i++){
+                            l_crcBuffer[i-1] = static_cast<uint8_t>(m_responseData.at(i));
+                        } // end for
+                        uint8_t crc_l;
+                        uint8_t crc_h;
+                        uint16_t crc_initial = 0x0000;
+                        uint8_t *pBuf = &l_crcBuffer[0];
+
+                        CalcCrc16_Poly(crc_initial, POLY_IBM, pBuf, l_msgLen, &crc_l, &crc_h);
+                        if ((crc_l == l_crcLow) && (crc_h == l_crcHigh)){
+                            qDebug() << "QS_CmdThread::parseRxData() CRC DONE";
+                            l_i_parseCount++;
+                            /// Is the ETX
+                            if (m_responseData.at(l_i_parseCount) == QS_BOOTP_ETX){
+                                setProtError(QS_BOOTP_NO_ERROR);
+                            } else {
+                                setProtError(QS_BOOTP_ERR_WRONG_ETX);
+                            }
+                        } else {
+                            setProtError(QS_BOOTP_ERR_CRC);
+                        }
+                    } else {
+                        setProtError(QS_BOOTP_ERR_CMD_ID);
+                    }
+                } else {
+                 setProtError(QS_BOOTP_ERR_POLICY);
+                }
+            } else {
+                setProtError(QS_BOOTP_ERR_WRONG_PAYLEN);
+            }
+        } else {
+           setProtError(QS_BOOTP_ERR_WRONG_STX);
+        }
+    }
+}
+
+void QS_CmdThread::setProtError(int _err)
+{
+    if (_err != m_ProtcolError){
+        m_ProtcolError = _err;
+        emit protErrorFound(_err);
+    } // else
+}
+
+bool QS_CmdThread::verifyPolicy(char _char)
+{
+    // For now we return always true
+    bool l_bRetVal = true;
+
+    uint8_t l_DevId = _char & QS_POLICY_MASK_DEV_ID;
+    uint8_t l_BuildType = _char & QS_POLICY_MASK_BUILD_TYPE;
+    uint8_t l_AppType = _char & QS_POLICY_MASK_APP_TYPE;
+
+    // We have to verify what to do
+    Q_UNUSED(l_DevId);
+    Q_UNUSED(l_BuildType);
+    Q_UNUSED(l_AppType);
+
+    return l_bRetVal;
+}
+

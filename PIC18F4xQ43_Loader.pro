@@ -35,6 +35,7 @@ SOURCES += \
 HEADERS += \
         qs_bootprotocol.h \
         qs_bootprotocoldef.h \
+        qs_bootprotocolerrordefine.h \
         qs_bootprotocolstruct.h \
         qs_cmdthread.h \
         qs_crc16.h \

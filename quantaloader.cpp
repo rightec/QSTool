@@ -81,6 +81,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     m_p_CmdThread = new QS_CmdThread(nullptr);
     connect(m_p_CmdThread, SIGNAL(timeout(QString)), this, SLOT(onSendCmdTimeout(QString)));
     connect(m_p_CmdThread, SIGNAL(response(QString)), this, SLOT(onResponse(QString)));
+    connect(m_p_CmdThread, SIGNAL(protErrorFound(int)), this, SLOT(onRxErrorCatch(int)));
     // m_p_CmdThread->moveToThread(&m_workerThread);
     // connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
     // connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
@@ -237,14 +238,14 @@ void QuantaLoader::writeSendToLog()
     l_s_write.append(" ");
 
     /// PAYLOAD
-    qDebug() << "QuantaLoader::writeSendToLog payload len:  " << m_p_CmdThread->m_cmdToSend.qs_PayLen;
+    // qDebug() << "QuantaLoader::writeSendToLog payload len:  " << m_p_CmdThread->m_cmdToSend.qs_PayLen;
     for (int i = 0; i < m_p_CmdThread->m_cmdToSend.qs_PayLen; i++){
         l_u8 = m_p_CmdThread->m_cmdToSend.qs_Payload[i];
         m_p_CmdThread->queueItemInCmdBuffer(l_u8);
         l_s_write.append("0x" +QString::number(l_u8,16));
         l_s_write.append(" ");
     } // end payload for
-    qDebug() << "QuantaLoader::writeSendToLog end sending payload ";
+    // qDebug() << "QuantaLoader::writeSendToLog end sending payload ";
 
     /// CRC LOW
     l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcLow;
@@ -283,10 +284,9 @@ void QuantaLoader::writeReadToLog(QString _string)
          l_s_write.append(" ");
     }
 
-//    ui->m_txt_serialLog->insertHtml(l_s_write);
-//    ui->m_txt_serialLog->setStyleSheet("color: green");
-
     setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_RX, l_s_write);
+
+    m_p_CmdThread->parseRxData();
 
     /* TO PARSE
     uint8_t l_u8 = m_p_CmdThread->m_cmdToSend.qs_Stx;
@@ -522,6 +522,52 @@ void QuantaLoader::onFwUpdateUpdateprog()
         */
     }
 }
+
+void QuantaLoader::onRxErrorCatch(int _err)
+{
+    QTextEdit *l_txtRef = nullptr;
+
+    qDebug() << "QuantaLoader::onRxErrorCatch start";
+
+    if (m_guiSection == QS_CMD_PANEL_SECTION){
+        l_txtRef = ui->m_txt_serialLog;
+    } else {
+        // QS_FW_UPGRADE_SECTION
+        l_txtRef = ui->m_txt_upgradeLog;
+    }
+
+    switch (_err) {
+    case QS_BOOTP_NO_ERROR:
+        setLogColorByLevel(l_txtRef, QS_NO_ERROR, QS_BOOTP_NO_ERROR_STN);
+        break;
+    case QS_BOOTP_ERR_RX_LEN:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_RX_LEN_STN);
+        break;
+    case QS_BOOTP_ERR_WRONG_STX:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_WRONG_STX_STN);
+        break;
+    case QS_BOOTP_ERR_WRONG_PAYLEN:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_WRONG_PAYLEN_STN);
+        break;
+    case QS_BOOTP_ERR_POLICY:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_POLICY_STN);
+        break;
+    case QS_BOOTP_ERR_CMD_ID:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_CMD_ID_STN);
+        break;
+    case QS_BOOTP_ERR_CRC:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_CRC_STN);
+        break;
+    case QS_BOOTP_ERR_WRONG_ETX:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_WRONG_ETX_STN);
+        break;
+    default:
+        if (_err != 1000)
+            setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, "Unknown error");
+        break;
+    }
+}
+
 
 void QuantaLoader::on_m_btn_reset_clicked()
 {    

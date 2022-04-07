@@ -127,6 +127,8 @@ private slots:
 
     void onFwUpdateUpdateprog();
 
+    void onRxErrorCatch(int _err);
+
     void on_m_btn_reset_clicked();
 
     void on_m_btn_startUpgrade_clicked();
