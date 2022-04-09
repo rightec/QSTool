@@ -1,8 +1,6 @@
 #include "quantaloader.h"
 #include "ui_quantaloader.h"
 
-#include <QUrl>
-
 QuantaLoader::QuantaLoader(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::QuantaLoader)
@@ -17,6 +15,9 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
 
     ui->m_frm_PanelCmd->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
     ui->m_frm_mainUpload->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+
+    /// Init var state
+    setUpgradeState (QS_UP_STATE_NO_UPGRADE);
 
     /*! Build the Header Frame*/
     QPixmap l_logo_pic;
@@ -45,6 +46,7 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     l_logo_pic.load( l_S_temp);
     ui->m_lbl_ImageHead->setPixmap(l_logo_pic);     // Place the pixmap in the label
 #endif
+
     ui->m_lbl_tool->setText( QS_HEADER_BOOT);
 
     /*! Select the defualt section: Upgrade section*/
@@ -82,11 +84,12 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     connect(m_p_CmdThread, SIGNAL(timeout(QString)), this, SLOT(onSendCmdTimeout(QString)));
     connect(m_p_CmdThread, SIGNAL(response(QString)), this, SLOT(onResponse(QString)));
     connect(m_p_CmdThread, SIGNAL(protErrorFound(int)), this, SLOT(onRxErrorCatch(int)));
-    // m_p_CmdThread->moveToThread(&m_workerThread);
+    m_p_UpgradeThread = new QS_BootProtocol(nullptr);
+    // m_p_UpgradeThread->moveToThread(&m_workerThread);
     // connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
     // connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
     // connect(m_p_CmdThread, SIGNAL(cmdResultReady(bool)), this, SLOT(onCmdResultReady(bool)));
-    // m_workerThread.start();  /// TO DO Comment for now
+    // m_p_UpgradeThread->start();  /// TO DO Comment for now
     // Thread section ends
 
     /// BaudRate comboBox
@@ -96,8 +99,39 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
        ui->m_cmb_BaudRate->addItem(QString::number(l_baudRate,10));
     }
     ui->m_cmb_BaudRate->setCurrentIndex(QS_SERIAL_BAUD_END -1); // Default is 115200
+}
 
+bool QuantaLoader::startUpgradeProcedure()
+{
+    bool l_bRetVal = false;
 
+    if (m_p_CmdThread->isPortOpen() == false){
+        /// Com port is not open
+        /// Emit a log error message
+        /// Upgrade state will not be modified
+        /// Normally we shoul never be here
+        setLogColorByLevel(ui->m_txt_upgradeLog,QS_ERROR_DETECTED,QS_BOOTP_UP_ERR_COM_DOWN_STN);
+        l_bRetVal = false;
+    } else {
+        /// Text box is empty
+        /// Upgrade state will not be modified
+        if (ui->m_txt_selectFile->toPlainText() == ""){
+            setLogColorByLevel(ui->m_txt_upgradeLog,QS_ERROR_DETECTED,QS_BOOTP_UP_ERR_FILE_NOT_STN);
+            l_bRetVal = false;
+        } else {
+            /// Is the text a file?
+            if (!(QFile::exists(ui->m_txt_selectFile->toPlainText()))){
+                setLogColorByLevel(ui->m_txt_upgradeLog,QS_ERROR_DETECTED,QS_BOOTP_UP_ERR_EXIST_NOT_STN);
+                l_bRetVal = false;
+            } else {
+                /// We can start the upgrade
+                l_bRetVal = true;
+            }
+        }
+
+    }
+
+    return l_bRetVal;
 }
 
 void QuantaLoader::setGuiSection(QS_PanelSection _section)
@@ -205,6 +239,9 @@ void QuantaLoader::writeSendToLog()
 {
     // Reset cmd buffer
     m_p_CmdThread->resetCmdBuffer();
+    uint16_t l_u16= 0;
+    uint8_t  l_payload_l = 0;
+    uint8_t  l_payload_h = 0;
 
     /// STX
     QString l_s_write = "TX: ";
@@ -214,9 +251,23 @@ void QuantaLoader::writeSendToLog()
     l_s_write.append(" ");
 
     /// PAYLOAD LENGTH
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_PayLen;
+    l_u16 = m_p_CmdThread->m_cmdToSend.qs_PayLen;
+    // Low part
+    uint16_t l_t = (l_u16 >> 8) & 0x00FF;
+    l_u8 = static_cast<uint8_t>(l_t);
+
+    l_u8 = static_cast<uint8_t>(l_u16 & 0x00FF);
+    l_payload_l = l_u8;
     m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" + QString::number(l_u8,16));
+
+    // High
+    l_u8 = static_cast<uint8_t>((l_u16 >> 8) & 0x00FF);
+    l_payload_h = l_u8;
+    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
+
+    l_s_write.append("0x" + QString::number(l_payload_h,16));
+    l_s_write.append(" ");
+    l_s_write.append("0x" + QString::number(l_payload_l,16));
     l_s_write.append(" ");
 
     /// SENDER
@@ -386,7 +437,6 @@ void QuantaLoader::setLogColorByLevel(QTextEdit *_refTextEdit, QS_SignalLevel _e
     l_cursor.movePosition(QTextCursor::End);
     _refTextEdit->setTextCursor(l_cursor);
 }
-
 
 QuantaLoader::~QuantaLoader()
 {
@@ -568,7 +618,6 @@ void QuantaLoader::onRxErrorCatch(int _err)
     }
 }
 
-
 void QuantaLoader::on_m_btn_reset_clicked()
 {    
     /// Prepare QS_BOOTP_RESET command
@@ -586,6 +635,7 @@ void QuantaLoader::on_m_btn_startUpgrade_clicked()
     /// Prepare QS_BOOTP_START_FW_UP command
     /// This is a dummy command
     /// Only send the Start upgrade cmd and wait the answer
+
 
     m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
 
@@ -713,6 +763,40 @@ void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
 {
     /// TO DO - Prepare command
     /// Start the full FW Upgrade command sequence
+
+    bool l_bRetVal = false;
+
+    switch (m_upgradeState) {
+    case QS_UP_STATE_NO_UPGRADE:
+        l_bRetVal = startUpgradeProcedure();
+        if (l_bRetVal == true){
+            /// change button text and enabling state
+            /// change upgrade state var
+            setUpgradeState(QS_UP_STATE_UPGRADE_STARTED);
+            // ui->m_btn_startFwUpgrade->setEnabled(false);
+            ui->m_btn_startFwUpgrade->setText("UPGRADE STARTED. CLICK TO STOP IT");
+        } else {
+            m_msgBox.setText("Could not start upgrade");
+            if (m_msgBox.exec() == true){}
+        }
+        break;
+    case QS_UP_STATE_UPGRADE_STARTED:
+        /// A stop has been required
+        setUpgradeState(QS_UP_STATE_NO_UPGRADE);
+        m_msgBox.setText("User stop the upgrade");
+        /// TO DO: Performing some action
+        if (m_msgBox.exec() == true){}
+        ui->m_btn_startFwUpgrade->setEnabled(true);  // To be sure
+        ui->m_btn_startFwUpgrade->setText("START FIRMWARE UPGRADE");
+        break;
+    case QS_UP_STATE_UPGRADE_FAILED:
+    case QS_UP_STATE_UPGRADE_TERMINATE_OK:
+           qDebug() << "QuantaLoader::on_m_btn_startUpgrade_clicked() - Case not managed";
+        break;
+//    default:
+//        break;
+    }
+
     activateProgBar();
 
     m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);

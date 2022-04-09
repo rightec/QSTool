@@ -155,7 +155,7 @@ bool QS_CmdThread::prepCommand(int _idCmd)
     uint8_t *crc_l = &m_cmdToSend.qs_CrcLow;
     uint8_t *crc_h = &m_cmdToSend.qs_CrcHigh;
     uint16_t crc_initial = 0x0000;
-    uint8_t lenTxDecoder = m_cmdToSend.qs_PayLen;
+    uint16_t lenTxDecoder = m_cmdToSend.qs_PayLen;
     uint8_t *pBuf = &m_cmdToSend.qs_Payload[0];
 
     // CalcCrc16_Poly(0x0000, 0x8005, answerBuf, lenTxDecoder, &crcDecoderL, &crcDecoderH);
@@ -267,7 +267,9 @@ void QS_CmdThread::parseRxData()
     uint8_t l_crcLow = 0;
     uint8_t l_crcHigh = 0;
     uint8_t l_tempParse = 0;
-    uint8_t l_payloadLen = 0;
+    uint16_t l_payloadLen = 0;
+    uint8_t l_payloadLenL = 0;
+    uint8_t l_payloadLenH = 0;
     uint16_t l_msgLen = 0;
     uint8_t l_crcBuffer[QS_BOOTP_MAX_CMD_LEN];
     bool l_b_retVal = false;
@@ -285,7 +287,12 @@ void QS_CmdThread::parseRxData()
         if (m_responseData.at(l_i_parseCount) == QS_BOOTP_STX){
             qDebug() << "QS_CmdThread::parseRxData() STX DONE";
             l_i_parseCount++;
-            l_payloadLen = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+            l_payloadLenL = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+            l_i_parseCount++;
+            l_payloadLenH = static_cast<uint8_t>(m_responseData.at(l_i_parseCount));
+            l_payloadLen =  (0xFF00 & (static_cast<uint16_t>(l_payloadLenH) << 8)) |
+                            (0x00FF & static_cast<uint16_t>(l_payloadLenL));
+
             if ((l_payloadLen <=QS_BOOTP_MAX_PAY_LEN ) && (l_payloadLen >= QS_BOOTP_MIN_PAY_LEN)){
                 qDebug() << "QS_CmdThread::parseRxData() PAYLOAD LEN DONE";
                 l_i_parseCount++;
@@ -346,6 +353,21 @@ void QS_CmdThread::parseRxData()
         }
     }
 }
+
+bool QS_CmdThread::isExpectedCommand()
+{
+    bool l_bRetVal = true;
+
+    return l_bRetVal;
+}
+
+bool QS_CmdThread::isExpectedLength()
+{
+    bool l_bRetVal = true;
+
+    return l_bRetVal;
+}
+
 
 void QS_CmdThread::setProtError(int _err)
 {

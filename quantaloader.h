@@ -12,6 +12,7 @@
 
 #include "qs_guidefine.h"
 #include "qs_cmdthread.h"
+#include "qs_bootprotocol.h"
 
 
 namespace Ui {
@@ -55,9 +56,17 @@ private:
 
     QS_CmdThread        *m_p_CmdThread;
     QS_PanelSection     m_guiSection;
+    QS_UpgradeState     m_upgradeState;
+    QS_BootProtocol     *m_p_UpgradeThread;
 
     bool                m_isConnected;
 
+    /*!
+     * \brief s/getUpgradeState: Managing the upgrade state variable
+     * \param _state
+     */
+    void setUpgradeState (QS_UpgradeState _state){m_upgradeState = _state;}
+    QS_UpgradeState getUpgradeState (){return m_upgradeState;}
 
     /*!
      * \brief setGuiSection: Change the current section of the GUI
@@ -121,6 +130,12 @@ private:
      * \param _textToWrite
      */
     void setLogColorByLevel(QTextEdit *_refTextEdit, QS_SignalLevel _errLevel, QString _textToWrite);
+
+    /*!
+     * \brief startUpgradeProcedure
+     * \return true if the upgrade procedure is started
+     */
+    bool startUpgradeProcedure();
 
 private slots:
     void onCmdResultReady(bool _res);

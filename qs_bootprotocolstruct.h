@@ -34,8 +34,8 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t         ID_Info_Version;      /* Info Version  */
-    /* 8 bytes */
+    uint16_t         ID_Info_Version;      /* Info Version  */
+    /* 16 bytes */
 } ID_INFO_VERSION_T;
 
 /*!
@@ -96,18 +96,18 @@ typedef struct
 
 typedef struct QS_bootProt{
     uint8_t qs_Stx;                                 /*STX: Start of Message*/
-    uint8_t qs_PayLen;                             /*Payload lenght from 1 to 256 ---> Expressed as 0 to 255*/
-                                                    /*Minimum payload lenght = 1*/
-                                                    
+    uint16_t qs_PayLen;                             /*Payload lenght from 3 to 1024*/
+                                                    /*Minimum payload lenght = 3*/
+
     uint8_t qs_Sender;                              /* Sender of the packet (node source address)
                                                     sender Address (0x20 for PC, 0x23 for Board)*/
 
-    uint8_t qs_Policy;                              
+    uint8_t qs_Policy;
 
-        /* Destination address : status + ID = .0x80 = boot attivo 
+    /* Destination address : status + ID = .0x80 = boot attivo
                                                .0x40 = debug attivo
                                                0x00-0x3F -> device ID 0-64
-         * 
+         *
          * 00 10 0011
          *    ----------> ID             (0x00->0x3F)
          *  ------------> debug /release  (1=debug)

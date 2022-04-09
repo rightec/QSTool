@@ -42,6 +42,9 @@
 #define QS_BOOTP_ERR_CRC_STN            " Rx message CRC Error   "
 #define QS_BOOTP_ERR_WRONG_ETX_STN      " Rx message lenght ETX not received"
 
+#define QS_BOOTP_UP_ERR_COM_DOWN_STN    " Upgrade Error. Com port is closed "
+#define QS_BOOTP_UP_ERR_FILE_NOT_STN    " Upgrade Error. File not selected "
+#define QS_BOOTP_UP_ERR_EXIST_NOT_STN   " Upgrade Error. String is not a file "
 
 typedef enum {
     QS_CMD_PANEL_SECTION = 0,
@@ -54,5 +57,12 @@ typedef enum {
     QS_WRITE_TX = 2,
     QS_WRITE_RX = 3
 }QS_SignalLevel;
+
+typedef enum {
+    QS_UP_STATE_NO_UPGRADE = 0,
+    QS_UP_STATE_UPGRADE_STARTED = 1,
+    QS_UP_STATE_UPGRADE_TERMINATE_OK = 2,
+    QS_UP_STATE_UPGRADE_FAILED = 3,
+}QS_UpgradeState;
 
 #endif // QS_GUIDEFINE_H

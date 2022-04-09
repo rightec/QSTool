@@ -11,12 +11,12 @@
 #define QS_BOOTP_OK                 0x00 /* Command acknowledge - Use in the payload*/
 #define QS_BOOTP_FAIL               0x01 /* Command failed - Use in the payload*/
 
-#define QS_BOOTP_MIN_PAY_LEN          4  /*  Min payload lenght */
-#define QS_BOOTP_MAX_PAY_LEN        240  /*  Max payload lenght */
+#define QS_BOOTP_MIN_PAY_LEN          3  /*  Min payload lenght */
+#define QS_BOOTP_MAX_PAY_LEN       1024  /*  Max payload lenght */
 #define QS_BOOTP_MIN_CMD_LEN         12  /*  Min command lenght */
                                          /*  STX(1) + PAYLEN(1) + SENDER(1) + POLICY(1) */
                                          /*  CMD(1) + MINPAYLOAD(4) + CRC(2) + ETX(1)*/
-#define QS_BOOTP_MAX_CMD_LEN        255  /*  Max command lenght */
+#define QS_BOOTP_MAX_CMD_LEN        1036  /*  Max command lenght */
 
 #define QS_BOOTP_STX                0x02 /* (STX) */
 #define QS_BOOTP_ETX                0x03 /* (ETX) */
@@ -41,7 +41,7 @@
  *  0x51	ERASE                   Erase Flash
  *  0x52	READ                    Read Flash
  *  0x53	WRITE                   Write Flash
- *  0x70	START_FW_UPGRADE	    Start FW_Upgrade (jump to Bootloader…)
+ *  0x70	START_FW_UPGRADE	    Start FW_Upgrade (jump to Bootloader?)
  */
 
 #define QS_BOOTP_RES            0x00
@@ -68,7 +68,7 @@ typedef enum {
 The 16-bit device ID word is located at 0x3FFFFE and the 16-bit revision ID is located at 0x3FFFFC. These locations
 are read-only and cannot be erased or modified.
 Development tools, such as device programmers and debuggers, may be used to read the Device ID, Revision
-ID and Configuration bits. Refer to the “NVM - Nonvolatile Memory Module” section for more information on
+ID and Configuration bits. Refer to the ?NVM - Nonvolatile Memory Module? section for more information on
 accessing these locations
 */
 

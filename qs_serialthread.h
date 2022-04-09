@@ -78,6 +78,12 @@ public:
      */
     void setReadTimeout(int _timeout){m_waitTimeout = _timeout;}
 
+    /*!
+     * \brief isPortOpen
+     * \return
+     */
+    bool isPortOpen(){return m_serial.isOpen();}
+
     QByteArray m_responseData;
     QByteArray m_requestData;
     uint8_t    m_SerialBuffer[QS_SERIAL_MAX_BUF_LEN ];

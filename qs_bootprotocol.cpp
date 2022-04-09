@@ -8,19 +8,26 @@
 #include "qs_bootprotocol.h"
 
 
-QS_BootProtocol::QS_BootProtocol()
+QS_BootProtocol::QS_BootProtocol(QObject *parent)
+    : QThread(parent)
 {
 
 }
 
-/** Set a component's verbosity.
-*
-* If no verbosity is specified, inherit from parent
-*
-* @param name component of interest
-* @param verbosity desired trace verbosity
-*/
-bool QS_BootProtocol::QS_SendMsg()
+QS_BootProtocol::~QS_BootProtocol()
 {
 
+}
+
+void QS_BootProtocol::run()
+{
+    /// Start Test code
+    int i = 0;
+    while (true){
+        i++;
+        if ((i % 10000000) == 0){
+            qDebug() << "QS_BootProtocol::run() " << i;
+        }
+    }
+    /// End Test code
 }

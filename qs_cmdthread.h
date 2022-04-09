@@ -136,6 +136,14 @@ private:
      */
     bool verifyPolicy(char _char);
 
+
+    /*!
+     * \brief isExpectedCommand /isExpectedLength: Veritication during parsing
+     * \return
+     */
+    bool isExpectedCommand();
+    bool isExpectedLength();
+
 signals:
 	void cmdResultReady(bool _result);
     void protErrorFound(int _err);
