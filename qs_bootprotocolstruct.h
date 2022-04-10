@@ -11,6 +11,12 @@
 #include <stdint.h>
 #include "qs_bootprotocoldef.h"
 
+#define QS_BOOTP_STX_POS        0  /*Start position of STX in the protocol struct*/
+#define QS_BOOTP_LEN_POS        1  /*Start position of lenght in the protocol struct*/
+#define QS_BOOTP_SND_POS        3  /*Start position of sender in the protocol struct*/
+#define QS_BOOTP_POL_POS        4  /*Start position of policy in the protocol struct*/
+#define QS_BOOTP_CMD_POS        5  /*Start position of command id in the protocol struct*/
+#define QS_BOOTP_PAY_POS        6  /*Start position of payload in the protocol struct*/
 
 /*!
  *  \typedef Stuctrured type to be used as payload in the following commands:
@@ -34,8 +40,8 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t         ID_Info_Version;      /* Info Version  */
-    /* 16 bytes */
+    uint16_t         ID_Info;      /* Info Version  */
+    /* 2 bytes */
 } ID_INFO_VERSION_T;
 
 /*!
@@ -104,7 +110,7 @@ typedef struct QS_bootProt{
 
     uint8_t qs_Policy;
 
-    /* Destination address : status + ID = .0x80 = boot attivo
+        /* Destination address : status + ID = .0x80 = boot attivo
                                                .0x40 = debug attivo
                                                0x00-0x3F -> device ID 0-64
          *

@@ -108,6 +108,7 @@ public:
 
 
     QS_BOOT_PROT_T      m_cmdToSend;
+    QS_BOOT_PROT_T      m_cmdReceived;
 
 
 public slots:
@@ -142,7 +143,16 @@ private:
      * \return
      */
     bool isExpectedCommand();
-    bool isExpectedLength();
+    bool isExpectedLength(uint8_t _idCmd);
+
+
+    /*!
+     * \brief retMinExpectedPayLen: Return the minimum expected payload lenght
+     *        for the given command
+     * \param _idCmd
+     * \return
+     */
+    uint16_t retMinExpectedPayLen(uint8_t _idCmd);
 
 signals:
 	void cmdResultReady(bool _result);

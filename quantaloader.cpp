@@ -82,7 +82,8 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     /*! Thread section starts*/
     m_p_CmdThread = new QS_CmdThread(nullptr);
     connect(m_p_CmdThread, SIGNAL(timeout(QString)), this, SLOT(onSendCmdTimeout(QString)));
-    connect(m_p_CmdThread, SIGNAL(response(QString)), this, SLOT(onResponse(QString)));
+//    connect(m_p_CmdThread, SIGNAL(response(QString)), this, SLOT(onResponse(QString)));
+    connect(m_p_CmdThread, SIGNAL(response(int)), this, SLOT(onResponse(int)));
     connect(m_p_CmdThread, SIGNAL(protErrorFound(int)), this, SLOT(onRxErrorCatch(int)));
     m_p_UpgradeThread = new QS_BootProtocol(nullptr);
     // m_p_UpgradeThread->moveToThread(&m_workerThread);
@@ -324,81 +325,139 @@ void QuantaLoader::writeSendToLog()
     m_p_CmdThread->writeToSerial();
 }
 
-void QuantaLoader::writeReadToLog(QString _string)
+void QuantaLoader::writeReadToLog(int _size)
 {
-    QString l_s_write = "RX: ";
-    int l_i_Size = m_p_CmdThread->m_responseData.size();
-    qDebug() << "QuantaLoader::writeReadToLog red bytes: " << l_i_Size;
-    for (int i= 0; i<l_i_Size; i++){
-         uint8_t l_u8 = static_cast<uint8_t>(m_p_CmdThread->m_responseData.at(i));
-         l_s_write.append("0x" +QString::number(l_u8,16));
-         l_s_write.append(" ");
+    QString l_s_write = "RX RAW: ";
+    uint8_t l_TempArray[QS_BOOTP_MAX_CMD_LEN ];
+
+    for (int i= 0; i<_size; i++){
+        l_s_write = l_s_write + "0x";
+        l_s_write.append(QString::number(static_cast<uint8_t>(m_p_CmdThread->m_data[i]),16));
+        l_s_write.append(" ");
     }
 
     setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_RX, l_s_write);
 
+    l_s_write = "RX PRS: ";
+    memset(static_cast<void*>(&l_TempArray[0]),0xFF,QS_BOOTP_MAX_CMD_LEN);
+
+    int l_i_Size = m_p_CmdThread->m_responseData.size();
+    qDebug() << "QuantaLoader::writeReadToLog red bytes: " << l_i_Size;
+    for (int i= 0; i<l_i_Size; i++){
+         uint8_t l_u8 = static_cast<uint8_t>(m_p_CmdThread->m_responseData.at(i));
+         if (i == 1){
+             l_TempArray[2] = l_u8;
+         } else {
+             if (i == 2){
+                 l_TempArray[1] = l_u8;
+             } else {
+                 if (i== (l_i_Size -2)){
+                     l_TempArray[l_i_Size -3] = l_u8;
+                 } else {
+                     if (i== (l_i_Size -3)){
+                         l_TempArray[l_i_Size -2] = l_u8;
+                     } else {
+                        l_TempArray[i] = l_u8;
+                     }
+                 }
+             }
+         }
+    }
+
+    for (int i= 0; i<l_i_Size; i++){
+         uint8_t l_u8 = l_TempArray[i];
+         l_s_write.append("0x" +QString::number(l_u8,16));
+         l_s_write.append(" ");
+    }
+    setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_RX, l_s_write);
+
     m_p_CmdThread->parseRxData();
+}
 
-    /* TO PARSE
-    uint8_t l_u8 = m_p_CmdThread->m_cmdToSend.qs_Stx;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    uint16_t l_u16 = 0;
-    l_s_write = "0x" + QString::number(l_u8,16);
-    l_s_write.append(" ");
+QString QuantaLoader::parseFwVersion()
+{
+    FW_SW_VERSION_T l_fwVersion;
+    uint8_t l_VersionHigh = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[2]);
+    uint8_t l_VersionLow = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[1]);
+    l_fwVersion.FW_Erp_Identifier =
+                            (0xFF00 & (static_cast<uint16_t>(l_VersionHigh) << 8)) |
+                            (0x00FF & static_cast<uint16_t>(l_VersionLow));
+    l_fwVersion.FW_Erp_Version = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[3]);
+    l_fwVersion.FW_Erp_BuildNumber = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[4]);
+    uint8_t l_crc1High = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[6]);
+    uint8_t l_crc1Low = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[5]);
+    uint8_t l_crc2High = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[8]);
+    uint8_t l_crc2Low = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[7]);
+    l_fwVersion.FW_Erp_Crc32 = (0xFF000000 &(static_cast<uint32_t>(l_crc1Low) <<24)) |
+                               (0x00FF0000 &(static_cast<uint32_t>(l_crc1High) <<16))|
+                               (0x0000FF00 &(static_cast<uint32_t>(l_crc2Low) <<8)) |
+                               (0x000000FF &(static_cast<uint32_t>(l_crc2High)));
+    QString l_S_fwVersion = " Id." + QString::number(l_fwVersion.FW_Erp_Identifier,10) +
+                            " Ver." + QString::number(l_fwVersion.FW_Erp_Version,10) +
+                            " Build." + QString::number(l_fwVersion.FW_Erp_BuildNumber,10) +
+                            " CRC: 0x" + QString::number(l_fwVersion.FW_Erp_Crc32,16);
 
-    l_u16 = m_p_CmdThread->m_cmdToSend.qs_PayLen;
-    l_u8 = (l_u16 & 0xFF00) >> 8;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" + QString::number(l_u8,16));
-    l_s_write.append(" ");
-    l_u8 = (l_u16 & 0x00FF);
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" + QString::number(l_u8,16));
-    l_s_write.append(" ");
+    return l_S_fwVersion;
+}
 
+QString QuantaLoader::parseRegId()
+{
+    ID_INFO_VERSION_T l_infoId;
+    uint8_t l_infoIdL = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[1]);
+    uint8_t l_infoIdH = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[2]);
 
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_Sender;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" +QString::number(l_u8,16));
-    l_s_write.append(" ");
+    l_infoId.ID_Info =(0xFF00 & (static_cast<uint16_t>(l_infoIdH) << 8)) |
+                            (0x00FF & static_cast<uint16_t>(l_infoIdL));
 
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_Policy;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" +QString::number(l_u8,16));
-    l_s_write.append(" ");
+    QString l_S_info = " Id: 0x" + QString::number(l_infoId.ID_Info,16);
 
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_CmdId;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" +QString::number(l_u8,16));
-    l_s_write.append(" ");
+    return l_S_info;
+}
 
-    for (int i = 0; i < m_p_CmdThread->m_cmdToSend.qs_PayLen; i++){
-        l_u8 = m_p_CmdThread->m_cmdToSend.qs_Payload[i];
-        m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-        l_s_write.append("0x" +QString::number(l_u8,16));
-        l_s_write.append(" ");
-    } // end payload for
+void QuantaLoader::parsePayload()
+{
+    uint8_t _idCmd = m_p_CmdThread->m_cmdReceived.qs_CmdId;
 
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcLow;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" +QString::number(l_u8,16));
-    l_s_write.append(" ");
-
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_CrcHigh;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" +QString::number(l_u8,16));
-    l_s_write.append(" ");
-
-    l_u8 = m_p_CmdThread->m_cmdToSend.qs_Etx;
-    m_p_CmdThread->queueItemInCmdBuffer(l_u8);
-    l_s_write.append("0x" +QString::number(l_u8,16));
-    l_s_write.append(" ");
-
-    ui->m_txt_serialLog->setStyleSheet("color: blue");
-    ui->m_txt_serialLog->appendPlainText(l_s_write);
-
-    m_p_CmdThread->writeToSerial();
-    */
+    switch (_idCmd)
+    {
+    case QS_BOOTP_RESET:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_RESET";
+        break;
+    case QS_BOOTP_READ_FW:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_FW";
+        ui->m_txt_readFW->setText(parseFwVersion());
+        break;
+     case QS_BOOTP_READ_REV:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_REV";
+        ui->m_txt_readRID->setText(parseRegId());
+        break;
+    case QS_BOOTP_READ_DEV:
+       qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_DEV";
+       ui->m_txt_readDID->setText(parseRegId());
+       break;
+    case QS_BOOTP_READ_BOOT:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_BOOT";
+        ui->m_txt_readBoot->setText(parseFwVersion());
+        break;
+    case QS_BOOTP_RES:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_RES";
+        break;
+    case QS_BOOTP_ERASE:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_ERASE";
+        break;
+    case QS_BOOTP_READ_FLASH:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_FLASH";
+        break;
+    case QS_BOOTP_WRITE_FLASH:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_WRITE_FLASH";
+        break;
+    case QS_BOOTP_START_FW_UP:
+        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_START_FW_UP";
+        break;
+    default:
+        qDebug() << " QuantaLoader::parsePayload()  case not managed" << _idCmd;
+        break;
+    } // end switch
 }
 
 void QuantaLoader::setLogColorByLevel(QTextEdit *_refTextEdit, QS_SignalLevel _errLevel, QString _textToWrite)
@@ -588,6 +647,7 @@ void QuantaLoader::onRxErrorCatch(int _err)
 
     switch (_err) {
     case QS_BOOTP_NO_ERROR:
+        parsePayload();
         setLogColorByLevel(l_txtRef, QS_NO_ERROR, QS_BOOTP_NO_ERROR_STN);
         break;
     case QS_BOOTP_ERR_RX_LEN:
@@ -610,6 +670,12 @@ void QuantaLoader::onRxErrorCatch(int _err)
         break;
     case QS_BOOTP_ERR_WRONG_ETX:
         setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_WRONG_ETX_STN);
+        break;
+    case QS_BOOTP_ERR_LEN_NOT_EXP:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_LEN_NOT_EXP_STN);
+        break;
+    case QS_BOOTP_ERR_CMD_NOT_EXP:
+        setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, QS_BOOTP_ERR_CMD_NOT_EXP_STN);
         break;
     default:
         if (_err != 1000)
@@ -857,6 +923,13 @@ void QuantaLoader::onSendCmdTimeout(const QString &s)
     qDebug() << "QuantaLoader::onSendCmdTimeout Error is: " << s;
 }
 
+void QuantaLoader::onResponse(int _size)
+{
+    /// Write row in the log
+    qDebug() << "QuantaLoader::onResponse. Catched data are: " << _size;
+    writeReadToLog(_size);
+}
+/*
 void QuantaLoader::onResponse(const QString &s)
 {
     /// TO DO paring the message
@@ -864,3 +937,4 @@ void QuantaLoader::onResponse(const QString &s)
     qDebug() << "QuantaLoader::onResponse. Catched data are: " << s;
     writeReadToLog(s);
 }
+*/

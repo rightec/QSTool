@@ -66,6 +66,7 @@ QS_SerialThread::~QS_SerialThread()
 
 void QS_SerialThread::run()
 {
+    int l_iNewSize = 0;
     qDebug() << "QS_SerialThread::run() - ENTER";
 
     while (!m_quit) {
@@ -75,16 +76,40 @@ void QS_SerialThread::run()
                             QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
                 if (m_serial.waitForReadyRead(m_waitTimeout)) {
                     m_responseData.clear();
-                    m_responseData = m_serial.readAll();
-                    while (m_serial.waitForReadyRead(10))
-                        m_responseData += m_serial.readAll();
+                    char data[QS_BOOTP_MAX_CMD_LEN];
+                    l_iNewSize = 0;
+                    memset(&data[0],0, QS_BOOTP_MAX_CMD_LEN);
+                    memset(&m_data[0],0, QS_BOOTP_MAX_CMD_LEN);
+                    // qint64 l_q64size = m_serial.read(&data[0], QS_BOOTP_MAX_CMD_LEN);
+                    qint64 l_q64size = m_serial.readLine(&data[0], QS_BOOTP_MAX_CMD_LEN);
+                    memcpy(&m_data[0],&data[0], static_cast<size_t>(l_q64size));
+                    for (int i=0; i<l_q64size; i++){
+                        m_responseData.append(data[i]);
+                    }
+
+                    l_iNewSize = l_iNewSize + static_cast<int>(l_q64size);
+                    // m_responseData = m_serial.readAll();
+                    while (m_serial.waitForReadyRead(50)) {
+                        //  m_responseData += m_serial.readAll();
+                        memset(&data[0],0, QS_BOOTP_MAX_CMD_LEN);
+                        // l_q64size = m_serial.read(&data[0], QS_BOOTP_MAX_CMD_LEN);
+                        l_q64size = m_serial.readLine(&data[0], QS_BOOTP_MAX_CMD_LEN);
+                        memcpy(&m_data[l_iNewSize],&data[0], static_cast<size_t>(l_q64size));
+                        l_iNewSize = l_iNewSize + static_cast<int>(l_q64size);
+
+                        for (int i=0; i<l_q64size; i++){
+                            m_responseData.append(data[i]);
+                        } // end for
+                    } // end while
+                      //  m_responseData += m_serial.readAll();
                     qDebug() << "QS_SerialThread::run() - Read All at: " <<
                                 QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss,zzz");
 
                     setReadTimeout(0); /// Reset timeout
                     m_enableRead = false;
-                    const QString response = QString::fromUtf8(m_responseData);
-                    emit this->response(response);
+                    // const QString response = QString::fromUtf8(m_responseData);
+                    // emit this->response(response);
+                    emit this->response(m_responseData.size());
 
                     qint64 a = m_serial.bytesAvailable();
                     if (a > 0){
@@ -184,7 +209,8 @@ bool QS_SerialThread::writeToSerial()
 {
     bool l_b_RetVal = false;
 
-    m_serial.write((const char*)&m_SerialBuffer[0],m_BytesToWrite);
+    m_serial.write((const char*)&m_SerialBuffer[0],
+                    m_BytesToWrite);
     // m_serial.write(m_requestData);
     if (m_serial.waitForBytesWritten(m_waitWriteTimeout)) {
         qDebug() << "QS_SerialThread::writeToSerial open and thread started at: " <<

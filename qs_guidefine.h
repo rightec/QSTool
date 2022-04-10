@@ -41,6 +41,9 @@
 #define QS_BOOTP_ERR_CMD_ID_STN         " Rx message CMD ID not as expected "
 #define QS_BOOTP_ERR_CRC_STN            " Rx message CRC Error   "
 #define QS_BOOTP_ERR_WRONG_ETX_STN      " Rx message lenght ETX not received"
+#define QS_BOOTP_ERR_LEN_NOT_EXP_STN    " Rx message payload lenght not as expected "
+#define QS_BOOTP_ERR_CMD_NOT_EXP_STN    " Rx message command recieved not as expected "
+
 
 #define QS_BOOTP_UP_ERR_COM_DOWN_STN    " Upgrade Error. Com port is closed "
 #define QS_BOOTP_UP_ERR_FILE_NOT_STN    " Upgrade Error. File not selected "

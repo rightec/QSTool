@@ -16,5 +16,7 @@
 #define QS_BOOTP_ERR_CMD_ID         0x05 /* Rx message CMD ID not as expected               */
 #define QS_BOOTP_ERR_CRC            0x06 /* Rx message CRC Error                            */
 #define QS_BOOTP_ERR_WRONG_ETX      0x07 /* Rx message lenght ETX not received              */
+#define QS_BOOTP_ERR_LEN_NOT_EXP    0x08 /* Rx message payload lenght not as expected       */
+#define QS_BOOTP_ERR_CMD_NOT_EXP    0x09 /* Rx message command recieved not as expected     */
 
 #endif // QS_BOOTPROTOCOLERRORDEFINE_H

@@ -17,6 +17,7 @@
 
 #include "qs_serialdefine.h"
 #include "qs_crc16.h"
+#include "qs_bootprotocoldef.h"
 
 
 class QS_SerialThread : public QThread
@@ -88,10 +89,12 @@ public:
     QByteArray m_requestData;
     uint8_t    m_SerialBuffer[QS_SERIAL_MAX_BUF_LEN ];
     uint16_t   m_BytesToWrite;
+    char       m_data[QS_BOOTP_MAX_CMD_LEN];
 
 
 signals:
-    void response(const QString &s);
+    void response(int _size );
+//     void response(const QString &s);
     void error(const QString &s);
     void timeout(const QString &s);
 

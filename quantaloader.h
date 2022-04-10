@@ -32,7 +32,8 @@ private slots:
      * \brief onResponse: Slot catching the answer from serial
      * \param s
      */
-    void onResponse(const QString &s);
+ //   void onResponse(const QString &s);
+    void onResponse(int _size);
     /*!
      * \brief onSendCmdTimeout. Timeout failure when sending command
      * \param s: Error string
@@ -113,9 +114,9 @@ private:
 
     /*!
      * \brief writeReadToLog: Write the command answer to the log
-     * \param _string
+     * \param _size
      */
-    void writeReadToLog(QString _string);
+    void writeReadToLog(int _size);
 
     /*!
      * \brief enableCmdButton: Enable/Disable all the command buttons on both panels
@@ -136,6 +137,23 @@ private:
      * \return true if the upgrade procedure is started
      */
     bool startUpgradeProcedure();
+
+    /*!
+     * \brief parsePayload
+     */
+    void parsePayload();
+
+    /*!
+     * \brief parseFwVersion
+     * \return
+     */
+    QString parseFwVersion();
+
+    /*!
+     * \brief parseRegId
+     * \return
+     */
+    QString parseRegId();
 
 private slots:
     void onCmdResultReady(bool _res);
