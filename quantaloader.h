@@ -54,11 +54,13 @@ private:
     QMessageBox         m_msgBox;
     QTimer              m_Tmr_UpdateFWProgBar;
     QThread             m_workerThread;
+    QString             m_StringFromHex;
 
     QS_CmdThread        *m_p_CmdThread;
     QS_PanelSection     m_guiSection;
     QS_UpgradeState     m_upgradeState;
     QS_BootProtocol     *m_p_UpgradeThread;
+
 
     bool                m_isConnected;
 
@@ -99,7 +101,7 @@ private:
     /*!
      * \brief activateProgBar
      */
-    void activateProgBar();
+    void activateProgBar(bool _enable);
 
     /*!
      * \brief preSendCommand. Prepare the command to be sent to the low layer
@@ -110,13 +112,13 @@ private:
     /*!
      * \brief writeSendToLog: write current send command to serial log
      */
-    void writeSendToLog();
+    void writeSendToLog(QTextEdit * _refTextEdit);
 
     /*!
      * \brief writeReadToLog: Write the command answer to the log
      * \param _size
      */
-    void writeReadToLog(int _size);
+    void writeReadToLog(int _size, QTextEdit* _refTextEdit, bool _enableParse);
 
     /*!
      * \brief enableCmdButton: Enable/Disable all the command buttons on both panels
@@ -139,6 +141,11 @@ private:
     bool startUpgradeProcedure();
 
     /*!
+     * \brief upgradeFwRun: Managing all teh upgrade procedure
+     */
+    void upgradeFwRun();
+
+    /*!
      * \brief parsePayload
      */
     void parsePayload();
@@ -156,9 +163,13 @@ private:
     QString parseRegId();
 
 private slots:
+    void onWriteStringToSend(QString _stringToSend);
+
     void onCmdResultReady(bool _res);
 
     void onFwUpdateUpdateprog();
+
+    void onUpdateProcCmdSent(int _idCmd);
 
     void onRxErrorCatch(int _err);
 

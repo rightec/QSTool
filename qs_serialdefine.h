@@ -27,7 +27,7 @@
 #define    QS_SERIAL_RESET_READ_TMT             1112     // 2ms Transfer time + 100ms Target Elab Time + 10ms General latency time
 #define    QS_SERIAL_ERASE_READ_TMT             312     // 2ms Transfer time + 300ms Target Elab Time + 10ms General latency time
 #define    QS_SERIAL_READ_FLASH_READ_TMT        312     // 2ms Transfer time + 300ms Target Elab Time + 10ms General latency time
-#define    QS_SERIAL_WRITE_FLASH_READ_TMT       312     // 2ms Transfer time + 300ms Target Elab Time + 10ms General latency time
+#define    QS_SERIAL_WRITE_FLASH_READ_TMT       1312     // 2ms Transfer time + 300ms Target Elab Time + 10ms General latency time
 #define    QS_SERIAL_START_FW_UP_READ_TMT       112     // 2ms Transfer time + 100ms Target Elab Time + 10ms General latency time
 
 

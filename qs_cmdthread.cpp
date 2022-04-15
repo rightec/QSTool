@@ -97,8 +97,9 @@ bool QS_CmdThread::prepCommand(int _idCmd)
         break;
     case QS_BOOTP_ERASE:
         m_cmdToSend.qs_PayLen = QS_BOOTP_MIN_PAY_LEN;
-        m_cmdToSend.qs_Payload[0] = m_BankInfoToSend.BANK_Info_Number;
-        for (int l_i = 1; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
+        m_cmdToSend.qs_Payload[0] = m_BankInfoToSend.BANK_Info_Ack;
+        m_cmdToSend.qs_Payload[1] = m_BankInfoToSend.BANK_Info_Number;
+        for (int l_i = 2; l_i < QS_BOOTP_MIN_PAY_LEN; l_i++){
             m_cmdToSend.qs_Payload[l_i] = QS_BOOTP_VOID_PAYLOAD;
         }
         setReadTimeout(QS_SERIAL_ERASE_READ_TMT);
@@ -436,7 +437,6 @@ uint16_t QS_CmdThread::retMinExpectedPayLen(uint8_t _idCmd)
     return l_qs_PayLen;
 
 }
-
 
 void QS_CmdThread::setProtError(int _err)
 {

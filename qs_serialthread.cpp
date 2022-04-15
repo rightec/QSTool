@@ -89,7 +89,7 @@ void QS_SerialThread::run()
 
                     l_iNewSize = l_iNewSize + static_cast<int>(l_q64size);
                     // m_responseData = m_serial.readAll();
-                    while (m_serial.waitForReadyRead(50)) {
+                    while (m_serial.waitForReadyRead(200)) {
                         //  m_responseData += m_serial.readAll();
                         memset(&data[0],0, QS_BOOTP_MAX_CMD_LEN);
                         // l_q64size = m_serial.read(&data[0], QS_BOOTP_MAX_CMD_LEN);
@@ -110,15 +110,6 @@ void QS_SerialThread::run()
                     // const QString response = QString::fromUtf8(m_responseData);
                     // emit this->response(response);
                     emit this->response(m_responseData.size());
-
-                    qint64 a = m_serial.bytesAvailable();
-                    if (a > 0){
-                        ///
-                        a = 2;
-                    } else {
-                        /// NO Byte read
-                        a = 1;
-                    }
                 } else {
                     setReadTimeout(0); /// Reset timeout
                     m_enableRead = false;
@@ -132,6 +123,9 @@ void QS_SerialThread::run()
                     /// Answer from the board without any command sent
                     /// Or an error somewhere
                     qDebug() << "QS_SerialThread::run(): receiving data: " << l_bytes;
+                    // Discard the data
+                    char data[QS_BOOTP_MAX_CMD_LEN];
+                    m_serial.readLine(&data[0],QS_BOOTP_MAX_CMD_LEN);
                 } // else
             }
     }

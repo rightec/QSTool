@@ -86,11 +86,12 @@ QuantaLoader::QuantaLoader(QWidget *parent) :
     connect(m_p_CmdThread, SIGNAL(response(int)), this, SLOT(onResponse(int)));
     connect(m_p_CmdThread, SIGNAL(protErrorFound(int)), this, SLOT(onRxErrorCatch(int)));
     m_p_UpgradeThread = new QS_BootProtocol(nullptr);
+    connect(m_p_UpgradeThread,SIGNAL(upgradeCmd(int)),this,SLOT(onUpdateProcCmdSent(int)));
+    connect(m_p_UpgradeThread,SIGNAL(sendWriteString(QString)),SLOT(onWriteStringToSend(QString)));
     // m_p_UpgradeThread->moveToThread(&m_workerThread);
     // connect(&m_workerThread, &QThread::finished, m_p_CmdThread, &QObject::deleteLater);
     // connect(this, SIGNAL(operate(int)), m_p_CmdThread, SLOT(onRunCommand(int)));
     // connect(m_p_CmdThread, SIGNAL(cmdResultReady(bool)), this, SLOT(onCmdResultReady(bool)));
-    // m_p_UpgradeThread->start();  /// TO DO Comment for now
     // Thread section ends
 
     /// BaudRate comboBox
@@ -121,18 +122,26 @@ bool QuantaLoader::startUpgradeProcedure()
             l_bRetVal = false;
         } else {
             /// Is the text a file?
-            if (!(QFile::exists(ui->m_txt_selectFile->toPlainText()))){
+            QString l_SHexFile = ui->m_txt_selectFile->toPlainText();
+            if (!(QFile::exists(l_SHexFile))){
                 setLogColorByLevel(ui->m_txt_upgradeLog,QS_ERROR_DETECTED,QS_BOOTP_UP_ERR_EXIST_NOT_STN);
                 l_bRetVal = false;
             } else {
                 /// We can start the upgrade
                 l_bRetVal = true;
+                m_p_UpgradeThread->setHexFileName(l_SHexFile);
             }
         }
 
     }
 
     return l_bRetVal;
+}
+
+void QuantaLoader::upgradeFwRun()
+{
+    m_p_UpgradeThread->start();
+    m_p_UpgradeThread->setUpgradeTriggerFlag(true);
 }
 
 void QuantaLoader::setGuiSection(QS_PanelSection _section)
@@ -185,19 +194,25 @@ void QuantaLoader::initProgressBar()
     ui->m_prg_UpdateFW->setValue(0);
 }
 
-void QuantaLoader::activateProgBar()
+void QuantaLoader::activateProgBar(bool _enable)
 {
 
     QProgressBar *l_WidgetTemp = nullptr;
     QString l_S_safe = "QProgressBar::chunk {background: green;border-bottom-right-radius: 7px;border-bottom-left-radius: 7px;border: 1px solid black;}";
 
     l_WidgetTemp = ui->m_prg_UpdateFW;
-    m_Tmr_UpdateFWProgBar.start(500);
 
-    l_WidgetTemp->setVisible(true);
-    l_WidgetTemp->setMinimum(0);
-    l_WidgetTemp->setMaximum(100);
-    l_WidgetTemp->setStyleSheet(l_S_safe);
+    if (_enable == true){
+        m_Tmr_UpdateFWProgBar.start(500);
+
+        l_WidgetTemp->setVisible(true);
+        l_WidgetTemp->setMinimum(0);
+        l_WidgetTemp->setMaximum(100);
+        l_WidgetTemp->setStyleSheet(l_S_safe);
+
+    } else {
+        l_WidgetTemp->setVisible(false);
+    }
 }
 
 void QuantaLoader::enableCmdButton(bool _enable)
@@ -225,7 +240,7 @@ bool QuantaLoader::preSendCommand(int _cmdId)
 
         m_p_CmdThread->prepCommand(_cmdId);
         /// write to log
-        writeSendToLog();
+        writeSendToLog(ui->m_txt_serialLog);
 
         emit operate(_cmdId);
     } else {
@@ -236,7 +251,7 @@ bool QuantaLoader::preSendCommand(int _cmdId)
     return l_b_RetVal;
 }
 
-void QuantaLoader::writeSendToLog()
+void QuantaLoader::writeSendToLog(QTextEdit * _refTextEdit)
 {
     // Reset cmd buffer
     m_p_CmdThread->resetCmdBuffer();
@@ -320,12 +335,12 @@ void QuantaLoader::writeSendToLog()
 //    ui->m_txt_serialLog->setStyleSheet("color: blue");
 //    ui->m_txt_serialLog->insertHtml(l_s_write);
 
-    setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_TX, l_s_write);
+    setLogColorByLevel(_refTextEdit, QS_WRITE_TX, l_s_write);
 
     m_p_CmdThread->writeToSerial();
 }
 
-void QuantaLoader::writeReadToLog(int _size)
+void QuantaLoader::writeReadToLog(int _size, QTextEdit* _refTextEdit, bool _enableParse)
 {
     QString l_s_write = "RX RAW: ";
     uint8_t l_TempArray[QS_BOOTP_MAX_CMD_LEN ];
@@ -336,42 +351,44 @@ void QuantaLoader::writeReadToLog(int _size)
         l_s_write.append(" ");
     }
 
-    setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_RX, l_s_write);
+    setLogColorByLevel(_refTextEdit, QS_WRITE_RX, l_s_write);
 
-    l_s_write = "RX PRS: ";
-    memset(static_cast<void*>(&l_TempArray[0]),0xFF,QS_BOOTP_MAX_CMD_LEN);
+    if (_enableParse == true){
+        l_s_write = "RX PRS: ";
+        memset(static_cast<void*>(&l_TempArray[0]),0xFF,QS_BOOTP_MAX_CMD_LEN);
 
-    int l_i_Size = m_p_CmdThread->m_responseData.size();
-    qDebug() << "QuantaLoader::writeReadToLog red bytes: " << l_i_Size;
-    for (int i= 0; i<l_i_Size; i++){
-         uint8_t l_u8 = static_cast<uint8_t>(m_p_CmdThread->m_responseData.at(i));
-         if (i == 1){
-             l_TempArray[2] = l_u8;
-         } else {
-             if (i == 2){
-                 l_TempArray[1] = l_u8;
+        int l_i_Size = m_p_CmdThread->m_responseData.size();
+        qDebug() << "QuantaLoader::writeReadToLog red bytes: " << l_i_Size;
+        for (int i= 0; i<l_i_Size; i++){
+             uint8_t l_u8 = static_cast<uint8_t>(m_p_CmdThread->m_responseData.at(i));
+             if (i == 1){
+                 l_TempArray[2] = l_u8;
              } else {
-                 if (i== (l_i_Size -2)){
-                     l_TempArray[l_i_Size -3] = l_u8;
+                 if (i == 2){
+                     l_TempArray[1] = l_u8;
                  } else {
-                     if (i== (l_i_Size -3)){
-                         l_TempArray[l_i_Size -2] = l_u8;
+                     if (i== (l_i_Size -2)){
+                         l_TempArray[l_i_Size -3] = l_u8;
                      } else {
-                        l_TempArray[i] = l_u8;
+                         if (i== (l_i_Size -3)){
+                             l_TempArray[l_i_Size -2] = l_u8;
+                         } else {
+                            l_TempArray[i] = l_u8;
+                         }
                      }
                  }
              }
-         }
-    }
+        }
 
-    for (int i= 0; i<l_i_Size; i++){
-         uint8_t l_u8 = l_TempArray[i];
-         l_s_write.append("0x" +QString::number(l_u8,16));
-         l_s_write.append(" ");
-    }
-    setLogColorByLevel(ui->m_txt_serialLog, QS_WRITE_RX, l_s_write);
+        for (int i= 0; i<l_i_Size; i++){
+             uint8_t l_u8 = l_TempArray[i];
+             l_s_write.append("0x" +QString::number(l_u8,16));
+             l_s_write.append(" ");
+        }
+        setLogColorByLevel(_refTextEdit, QS_WRITE_RX, l_s_write);
 
-    m_p_CmdThread->parseRxData();
+        m_p_CmdThread->parseRxData();
+    } // else
 }
 
 QString QuantaLoader::parseFwVersion()
@@ -418,6 +435,11 @@ void QuantaLoader::parsePayload()
 {
     uint8_t _idCmd = m_p_CmdThread->m_cmdReceived.qs_CmdId;
 
+    // Verify it the command is OK
+    uint8_t l_CmdRes = m_p_CmdThread->m_cmdReceived.qs_Payload[0];
+
+    if (l_CmdRes == QS_BOOTP_OK){
+
     switch (_idCmd)
     {
     case QS_BOOTP_RESET:
@@ -434,6 +456,15 @@ void QuantaLoader::parsePayload()
     case QS_BOOTP_READ_DEV:
        qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_DEV";
        ui->m_txt_readDID->setText(parseRegId());
+       if (m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_START){
+           /// if the command comes from upgrade procedure
+           m_p_UpgradeThread->setUpgradeCmdAnswer(true);
+           uint8_t l_infoIdL = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[1]);
+           uint8_t l_infoIdH = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Payload[2]);
+           uint16_t l_infoId =(0xFF00 & (static_cast<uint16_t>(l_infoIdH) << 8)) |
+                                   (0x00FF & static_cast<uint16_t>(l_infoIdL));
+           m_p_UpgradeThread->setDeviceId(l_infoId);
+       } //
        break;
     case QS_BOOTP_READ_BOOT:
         qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_BOOT";
@@ -444,20 +475,49 @@ void QuantaLoader::parsePayload()
         break;
     case QS_BOOTP_ERASE:
         qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_ERASE";
+        if (m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_ERASE){
+            /// if the command comes from upgrade procedure
+            m_p_UpgradeThread->setUpgradeCmdAnswer(true);
+        } //
         break;
     case QS_BOOTP_READ_FLASH:
         qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_READ_FLASH";
         break;
     case QS_BOOTP_WRITE_FLASH:
         qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_WRITE_FLASH";
+        if ((m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_WRITE_CYCLE) ||
+              (m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_WRITE_END)  )
+        {
+            /// if the command comes from upgrade procedure
+            m_p_UpgradeThread->setUpgradeCmdAnswer(true);
+        } //
         break;
     case QS_BOOTP_START_FW_UP:
         qDebug() << "QuantaLoader::parsePayload() - command  QS_BOOTP_START_FW_UP";
+        if (m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_SEND){
+            /// if the command comes from upgrade procedure
+            m_p_UpgradeThread->setUpgradeCmdAnswer(true);
+            uint8_t l_infoSendL = static_cast<uint8_t>(m_p_CmdThread->m_cmdReceived.qs_Sender);
+            m_p_UpgradeThread->setSenderId(l_infoSendL);
+        } //
         break;
     default:
         qDebug() << " QuantaLoader::parsePayload()  case not managed" << _idCmd;
         break;
     } // end switch
+    } else {
+        /// Board answer with KO
+        if (m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_START){
+            /// Upgrade procedure should stop immediatly
+            m_p_UpgradeThread->setUpgradeState(QS_UPGRADE_END);
+            setUpgradeState(QS_UP_STATE_UPGRADE_FAILED);
+            on_m_btn_startFwUpgrade_clicked();
+        } else {
+            /// A command from panel has failed
+            m_msgBox.setText("Command: " + QString::number(_idCmd,16) + "  failed");
+            if (m_msgBox.exec() == true){}
+        }
+    }
 }
 
 void QuantaLoader::setLogColorByLevel(QTextEdit *_refTextEdit, QS_SignalLevel _errLevel, QString _textToWrite)
@@ -502,43 +562,9 @@ QuantaLoader::~QuantaLoader()
     delete ui;
 }
 
-void QuantaLoader::on_m_btnChoosePanel_clicked()
+void QuantaLoader::onWriteStringToSend(QString _stringToSend)
 {
-    switch (static_cast<int>(m_guiSection)) {
-    case QS_CMD_PANEL_SECTION:
-        // We have to go to upgrade section
-        setGuiSection(QS_FW_UPGRADE_SECTION);
-        break;
-    case QS_FW_UPGRADE_SECTION:
-        setGuiSection(QS_CMD_PANEL_SECTION);
-        break;
-    default:
-        qDebug() << "QuantaLoader::on_m_btnChoosePanel_clicked wrong section !!!";
-        break;
-    }
-
-}
-
-void QuantaLoader::on_m_btn_clearUpgradeLog_clicked()
-{
-    ui->m_txt_upgradeLog->clear();  // Clear the log section
-}
-
-void QuantaLoader::on_m_btn_ClearCmdPanelLog_clicked()
-{
-    ui->m_txt_serialLog->clear();  // Clear the log section
-}
-
-void QuantaLoader::on_m_bnt_openDialog_clicked()
-{
-    QString l_S_FileName = "";
-    l_S_FileName = QFileDialog::getOpenFileName(this, tr("Browsing for the FW version"), "", tr("*.hex"));
-    qDebug() << "on_m_bnt_openDialog_clicked: Selected file: " << l_S_FileName;
-    if (l_S_FileName != ""){
-        /// It is the choosen file
-        ui->m_txt_selectFile->setText(l_S_FileName);
-    } /// else
-
+    m_StringFromHex = _stringToSend;
 }
 
 void QuantaLoader::onCmdResultReady(bool _res)
@@ -682,7 +708,62 @@ void QuantaLoader::onRxErrorCatch(int _err)
             setLogColorByLevel(l_txtRef, QS_ERROR_DETECTED, "Unknown error");
         break;
     }
+//    if (_err != QS_BOOTP_NO_ERROR)
+//        writeSendToLog(l_txtRef);
 }
+
+void QuantaLoader::onSendCmdTimeout(const QString &s)
+{
+    /// TO DO Emit a message
+    /// TO DO Write in the log ??
+    qDebug() << "QuantaLoader::onSendCmdTimeout Error is: " << s;
+}
+
+void QuantaLoader::onResponse(int _size)
+{
+    /// Write row in the log
+    qDebug() << "QuantaLoader::onResponse. Catched data are: " << _size;
+     writeReadToLog(_size,ui->m_txt_serialLog,true);
+
+     /*
+    if (getUpgradeState() != QS_UP_STATE_UPGRADE_STARTED){
+        writeReadToLog(_size,ui->m_txt_serialLog,true);
+    } else {
+        // writeReadToLog(_size,ui->m_txt_upgradeLog, false);
+    }
+    */
+}
+
+void QuantaLoader::onUpdateProcCmdSent(int _idCmd)
+{
+    if (_idCmd == QS_BOOTP_READ_DEV) {
+        on_m_btn_readDID_clicked();
+    } else {
+        if (_idCmd == QS_BOOTP_START_FW_UP){
+            on_m_btn_startUpgrade_clicked();
+        } else {
+            if (_idCmd == QS_BOOTP_ERASE){
+                on_m_btn_EraseFlash_clicked();
+            } else {
+                if (_idCmd == QS_BOOTP_WRITE_FLASH){
+                    on_m_btn_writeFlash_clicked();
+                } else {
+                    qDebug() << "QuantaLoader::onUpdateProcCmdSent - Command not implemented";
+                }
+            }
+        }
+    }
+}
+
+/*
+void QuantaLoader::onResponse(const QString &s)
+{
+    /// TO DO paring the message
+    /// Write row in the log
+    qDebug() << "QuantaLoader::onResponse. Catched data are: " << s;
+    writeReadToLog(s);
+}
+*/
 
 void QuantaLoader::on_m_btn_reset_clicked()
 {    
@@ -702,8 +783,11 @@ void QuantaLoader::on_m_btn_startUpgrade_clicked()
     /// This is a dummy command
     /// Only send the Start upgrade cmd and wait the answer
 
-
-    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+    if (getUpgradeState() == QS_UP_STATE_UPGRADE_STARTED){
+        m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+    } else {
+        m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+    }
 
 
     if (preSendCommand(QS_BOOTP_START_FW_UP) == false){
@@ -771,10 +855,16 @@ void QuantaLoader::on_m_btn_EraseFlash_clicked()
 {
     /// Prepare QS_BOOTP_ERASE command
 
-    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+    if (getUpgradeState() == QS_UP_STATE_UPGRADE_STARTED){
+        m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+        /// Retrieve Bank info
+        m_p_CmdThread->setBankInfoToSend(QS_BOOTP_OK,QS_BOOTP_ERASE_ALL);
+    } else {
+        m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+        /// Retrieve Bank info
+        m_p_CmdThread->setBankInfoToSend(QS_BOOTP_OK,static_cast<uint8_t>( ui->m_spn_SelectBankErase->value()));
+    }
 
-    /// Retrieve Bank info
-    m_p_CmdThread->setBankInfoToSend(QS_BOOTP_OK,static_cast<uint8_t>( ui->m_spn_SelectBankErase->value()));
 
     if (preSendCommand(QS_BOOTP_ERASE) == false){
         m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
@@ -806,16 +896,22 @@ void QuantaLoader::on_m_btn_writeFlash_clicked()
 {
     /// Prepare QS_BOOTP_WRITE_FLASH command
 
-// TO RESTORE    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
-    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+    if ((getUpgradeState() == QS_UP_STATE_UPGRADE_STARTED) &&
+           (m_p_UpgradeThread->getUpgradeState() == QS_UPGRADE_WRITE_CYCLE))
+    {
+        m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
+        m_p_CmdThread->setWriteFlashInfoToSend(m_StringFromHex);
+    } else {
+        m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DUMMY);
+        QString l_s_WriteString = ui->m_txtStringToWrite->toPlainText();
+        m_p_CmdThread->setWriteFlashInfoToSend(l_s_WriteString);
+    }
 
 
     /// Retrieve Bank info
     /* TO DELETE m_p_CmdThread->setWriteFlashInfoToSend(static_cast<uint8_t>( ui->m_spn_SelectBankWrite->value()),
                                            static_cast<uint8_t>(ui->m_spn_ValueToWrite->value()));
     */
-    QString l_s_WriteString = ui->m_txtStringToWrite->toPlainText();
-    m_p_CmdThread->setWriteFlashInfoToSend(l_s_WriteString);
 
 
     if (preSendCommand(QS_BOOTP_WRITE_FLASH) == false){
@@ -827,7 +923,6 @@ void QuantaLoader::on_m_btn_writeFlash_clicked()
 
 void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
 {
-    /// TO DO - Prepare command
     /// Start the full FW Upgrade command sequence
 
     bool l_bRetVal = false;
@@ -841,6 +936,7 @@ void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
             setUpgradeState(QS_UP_STATE_UPGRADE_STARTED);
             // ui->m_btn_startFwUpgrade->setEnabled(false);
             ui->m_btn_startFwUpgrade->setText("UPGRADE STARTED. CLICK TO STOP IT");
+            upgradeFwRun();
         } else {
             m_msgBox.setText("Could not start upgrade");
             if (m_msgBox.exec() == true){}
@@ -848,30 +944,25 @@ void QuantaLoader::on_m_btn_startFwUpgrade_clicked()
         break;
     case QS_UP_STATE_UPGRADE_STARTED:
         /// A stop has been required
+        activateProgBar(true);
         setUpgradeState(QS_UP_STATE_NO_UPGRADE);
-        m_msgBox.setText("User stop the upgrade");
+        m_msgBox.setText("User stopped the upgrade");
         /// TO DO: Performing some action
         if (m_msgBox.exec() == true){}
         ui->m_btn_startFwUpgrade->setEnabled(true);  // To be sure
         ui->m_btn_startFwUpgrade->setText("START FIRMWARE UPGRADE");
         break;
     case QS_UP_STATE_UPGRADE_FAILED:
+        m_msgBox.setText("Upgrade failed");
+        if (m_msgBox.exec() == true){}
+        activateProgBar(false);
+        ui->m_btn_startFwUpgrade->setEnabled(true);  // To be sure
+        ui->m_btn_startFwUpgrade->setText("START FIRMWARE UPGRADE");
+        break;
     case QS_UP_STATE_UPGRADE_TERMINATE_OK:
            qDebug() << "QuantaLoader::on_m_btn_startUpgrade_clicked() - Case not managed";
         break;
-//    default:
-//        break;
     }
-
-    activateProgBar();
-
-    m_p_CmdThread->setPolicyInfo(QS_BOOTP_POL_DEF);
-
-    if (preSendCommand(QS_BOOTP_START_FW_UP) == false){
-        m_msgBox.setText(QS_ERR_CMD_CURR_SEND);
-        if (m_msgBox.exec() == QMessageBox::Yes){
-        } ///else
-    } // else
 
 }
 
@@ -916,25 +1007,43 @@ void QuantaLoader::on_m_btn_connect_clicked()
     }
 }
 
-void QuantaLoader::onSendCmdTimeout(const QString &s)
+void QuantaLoader::on_m_btnChoosePanel_clicked()
 {
-    /// TO DO Emit a message
-    /// TO DO Write in the log ??
-    qDebug() << "QuantaLoader::onSendCmdTimeout Error is: " << s;
+    switch (static_cast<int>(m_guiSection)) {
+    case QS_CMD_PANEL_SECTION:
+        // We have to go to upgrade section
+        setGuiSection(QS_FW_UPGRADE_SECTION);
+        break;
+    case QS_FW_UPGRADE_SECTION:
+        setGuiSection(QS_CMD_PANEL_SECTION);
+        break;
+    default:
+        qDebug() << "QuantaLoader::on_m_btnChoosePanel_clicked wrong section !!!";
+        break;
+    }
+
 }
 
-void QuantaLoader::onResponse(int _size)
+void QuantaLoader::on_m_btn_clearUpgradeLog_clicked()
 {
-    /// Write row in the log
-    qDebug() << "QuantaLoader::onResponse. Catched data are: " << _size;
-    writeReadToLog(_size);
+    ui->m_txt_upgradeLog->clear();  // Clear the log section
 }
-/*
-void QuantaLoader::onResponse(const QString &s)
+
+void QuantaLoader::on_m_btn_ClearCmdPanelLog_clicked()
 {
-    /// TO DO paring the message
-    /// Write row in the log
-    qDebug() << "QuantaLoader::onResponse. Catched data are: " << s;
-    writeReadToLog(s);
+    ui->m_txt_serialLog->clear();  // Clear the log section
 }
-*/
+
+void QuantaLoader::on_m_bnt_openDialog_clicked()
+{
+    QString l_S_FileName = "";
+    l_S_FileName = QFileDialog::getOpenFileName(this, tr("Browsing for the FW version"), "", tr("*.hex"));
+    qDebug() << "on_m_bnt_openDialog_clicked: Selected file: " << l_S_FileName;
+    if (l_S_FileName != ""){
+        /// It is the choosen file
+        ui->m_txt_selectFile->setText(l_S_FileName);
+    } /// else
+
+}
+
+

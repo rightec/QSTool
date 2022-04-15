@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.2, 2022-04-11T00:39:50. -->
+<!-- Written by QtCreator 4.9.2, 2022-04-15T02:17:56. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -306,8 +306,8 @@
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">PIC18F4xQ43_Loader</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:C:/lavoro/Clienti/HiFuture/QuantaSystem/ProgettoSW/PIC18F4xQ43_Loader/PIC18F4xQ43_Loader/PIC18F4xQ43_Loader.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">PIC18F4xQ43_Loader2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:C:/lavoro/Clienti/HiFuture/QuantaSystem/ProgettoSW/BootLoaderFW/qs-22010-bootloader-pic18f4/Software/PIC18F4xQ43_Loader/PIC18F4xQ43_Loader.pro</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>

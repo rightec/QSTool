@@ -27,6 +27,7 @@
 #define QS_BOOTP_RESP_OFFSET        0x80 /*  Offset for command identifier field during response */
 
 #define QS_BOOTP_VOID_PAYLOAD       0xAA /*  Reset/StartUpdgrade commands have a single byte payload */
+#define QS_BOOTP_ERASE_ALL          0xFF /*  Ask the f/w to Erase all the chip (Application area) */
 
 /*!
  * Section to define command ID
